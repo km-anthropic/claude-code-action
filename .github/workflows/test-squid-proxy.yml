@@ -32,7 +32,9 @@ jobs:
           cache deny all
           EOF
           
-          sudo systemctl restart squid
+          # Start Squid (systemctl can hang in GitHub Actions)
+          sudo squid -k parse || true
+          sudo squid || true
           sleep 5
           
           # Block direct IP access and SSH
