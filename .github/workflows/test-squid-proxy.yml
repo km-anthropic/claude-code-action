@@ -1,0 +1,62 @@
+name: Test Squid Proxy Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-proxy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Network Restrictions
+        run: |
+          # Install and configure Squid proxy
+          sudo apt-get update && sudo apt-get install -y squid
+          
+          # Create whitelist
+          cat > /tmp/whitelist.txt << 'EOF'
+          .anthropic.com
+          .github.com
+          .githubusercontent.com
+          EOF
+          
+          # Configure Squid
+          sudo tee /etc/squid/squid.conf << 'EOF'
+          http_port 127.0.0.1:3128
+          acl whitelist dstdomain "/tmp/whitelist.txt"
+          acl localhost src 127.0.0.1/32
+          http_access allow localhost whitelist
+          http_access deny all
+          cache deny all
+          EOF
+          
+          sudo systemctl restart squid
+          sleep 5
+          
+          # Block direct IP access and SSH
+          sudo iptables -A OUTPUT -p tcp --dport 443 -d 127.0.0.1 -j ACCEPT
+          sudo iptables -A OUTPUT -p tcp --dport 443 -j DROP
+          sudo iptables -A OUTPUT -p tcp --dport 22 -j DROP
+          
+          # Set proxy environment variables
+          echo "http_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
+          echo "https_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
+          echo "HTTP_PROXY=http://127.0.0.1:3128" >> $GITHUB_ENV
+          echo "HTTPS_PROXY=http://127.0.0.1:3128" >> $GITHUB_ENV
+      
+      - name: Test Network Restrictions
+        run: |
+          echo "Testing whitelisted domains (should work):"
+          curl -I https://api.github.com || echo "GitHub API failed"
+          
+          echo -e "\nTesting blocked domains (should fail):"
+          curl -I -m 5 https://google.com || echo "Google blocked as expected"
+          curl -I -m 5 https://example.com || echo "Example.com blocked as expected"
+          
+          echo -e "\nTesting direct IP (should fail):"
+          curl -I -m 5 https://142.250.80.46 || echo "Direct IP blocked as expected"
+          
+          echo -e "\nChecking Squid logs:"
+          sudo tail -20 /var/log/squid/access.log
