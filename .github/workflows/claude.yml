@@ -29,6 +29,42 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup Network Restrictions
+        run: |
+          # Install and configure Squid proxy
+          sudo apt-get update && sudo apt-get install -y squid
+          
+          # Create whitelist
+          cat > /tmp/whitelist.txt << 'EOF'
+          .anthropic.com
+          .github.com
+          .githubusercontent.com
+          EOF
+          
+          # Configure Squid
+          sudo tee /etc/squid/squid.conf << 'EOF'
+          http_port 127.0.0.1:3128
+          acl whitelist dstdomain "/tmp/whitelist.txt"
+          acl localhost src 127.0.0.1/32
+          http_access allow localhost whitelist
+          http_access deny all
+          cache deny all
+          EOF
+          
+          sudo systemctl restart squid
+          sleep 5
+          
+          # Block direct IP access and SSH
+          sudo iptables -A OUTPUT -p tcp --dport 443 -d 127.0.0.1 -j ACCEPT
+          sudo iptables -A OUTPUT -p tcp --dport 443 -j DROP
+          sudo iptables -A OUTPUT -p tcp --dport 22 -j DROP
+          
+          # Set proxy environment variables
+          echo "http_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
+          echo "https_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
+          echo "HTTP_PROXY=http://127.0.0.1:3128" >> $GITHUB_ENV
+          echo "HTTPS_PROXY=http://127.0.0.1:3128" >> $GITHUB_ENV
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta
