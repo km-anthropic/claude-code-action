@@ -51,9 +51,11 @@ jobs:
           cache deny all
           EOF
           
-          # Start Squid (systemctl can hang in GitHub Actions)
-          sudo squid -k parse || true
-          sudo squid || true
+          # Stop any existing squid instance and start with our config
+          sudo squid -k shutdown || true
+          sleep 2
+          sudo rm -f /run/squid.pid
+          sudo squid -N -d 1 &
           sleep 5
           
           # Block direct IP access and SSH
