@@ -58,10 +58,9 @@ jobs:
           sudo squid -N -d 1 &
           sleep 5
           
-          # Block direct IP access and SSH
-          sudo iptables -A OUTPUT -p tcp --dport 443 -d 127.0.0.1 -j ACCEPT
-          sudo iptables -A OUTPUT -p tcp --dport 443 -j DROP
-          sudo iptables -A OUTPUT -p tcp --dport 22 -j DROP
+          # Note: We cannot use iptables to block all HTTPS traffic in GitHub Actions
+          # as it would block the runner's communication with GitHub
+          # The proxy alone will handle the filtering
           
           # Set proxy environment variables
           echo "http_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
