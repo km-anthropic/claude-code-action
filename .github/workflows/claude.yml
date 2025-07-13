@@ -29,6 +29,7 @@ jobs:
         with:
           fetch-depth: 1
 
+
       - name: Setup Network Restrictions
         run: |
           # Install and configure Squid proxy
@@ -69,6 +70,9 @@ jobs:
           echo "https_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
           echo "HTTP_PROXY=http://127.0.0.1:3128" >> $GITHUB_ENV
           echo "HTTPS_PROXY=http://127.0.0.1:3128" >> $GITHUB_ENV
+          # Bypass proxy for package registries to avoid integrity check issues
+          echo "NO_PROXY=localhost,127.0.0.1,registry.npmjs.org,registry.yarnpkg.com" >> $GITHUB_ENV
+          echo "no_proxy=localhost,127.0.0.1,registry.npmjs.org,registry.yarnpkg.com" >> $GITHUB_ENV
 
       - name: Run Claude Code
         id: claude
