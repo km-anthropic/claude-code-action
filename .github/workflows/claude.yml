@@ -37,10 +37,13 @@ jobs:
           # Create whitelist
           cat > /tmp/whitelist.txt << 'EOF'
           .anthropic.com
-          .github.com
+          github.com
+          api.github.com
           .githubusercontent.com
-          .bun.sh
+          ghcr.io
+          registry.npmjs.org
           bun.sh
+          .actions.githubusercontent.com
           .blob.core.windows.net
           EOF
           
@@ -60,11 +63,7 @@ jobs:
           sudo rm -f /run/squid.pid
           sudo squid -N -d 1 &
           sleep 5
-          
-          # Note: We cannot use iptables to block all HTTPS traffic in GitHub Actions
-          # as it would block the runner's communication with GitHub
-          # The proxy alone will handle the filtering
-          
+
           # Set proxy environment variables
           echo "http_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV
           echo "https_proxy=http://127.0.0.1:3128" >> $GITHUB_ENV

@@ -18,10 +18,13 @@ jobs:
           # Create whitelist
           cat > /tmp/whitelist.txt << 'EOF'
           .anthropic.com
-          .github.com
+          github.com
+          api.github.com
           .githubusercontent.com
-          .bun.sh
+          ghcr.io
+          registry.npmjs.org
           bun.sh
+          .actions.githubusercontent.com
           .blob.core.windows.net
           EOF
           
