@@ -41,5 +41,6 @@ jobs:
           allowed_domains: |
             .anthropic.com
             .github.com
+            api.github.com
             .githubusercontent.com
             bun.sh
