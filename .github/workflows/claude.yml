@@ -44,3 +44,4 @@ jobs:
             api.github.com
             .githubusercontent.com
             bun.sh
+            registry.npmjs.org
