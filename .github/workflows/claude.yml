@@ -40,3 +40,6 @@ jobs:
           # Test network restrictions
           allowed_domains: |
             .anthropic.com
+            .github.com
+            .githubusercontent.com
+            bun.sh
