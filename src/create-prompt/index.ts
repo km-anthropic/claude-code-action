@@ -472,8 +472,12 @@ function substitutePromptVariables(
 
   const variables: Record<string, string> = {
     REPOSITORY: context.repository,
-    PR_NUMBER: eventData.isPR ? (eventData as any).prNumber || "" : "",
-    ISSUE_NUMBER: !eventData.isPR ? (eventData as any).issueNumber || "" : "",
+    PR_NUMBER:
+      eventData.isPR && "prNumber" in eventData ? eventData.prNumber : "",
+    ISSUE_NUMBER:
+      !eventData.isPR && "issueNumber" in eventData
+        ? eventData.issueNumber
+        : "",
     PR_TITLE: eventData.isPR && contextData?.title ? contextData.title : "",
     ISSUE_TITLE: !eventData.isPR && contextData?.title ? contextData.title : "",
     PR_BODY: eventData.isPR && contextData?.body ? contextData.body : "",
@@ -490,11 +494,18 @@ function substitutePromptVariables(
     CHANGED_FILES: eventData.isPR
       ? formatChangedFilesWithSHA(changedFilesWithSHA)
       : "",
-    TRIGGER_COMMENT: (eventData as any).commentBody || "",
+    TRIGGER_COMMENT: "commentBody" in eventData ? eventData.commentBody : "",
     TRIGGER_USERNAME: context.triggerUsername || "",
     BRANCH_NAME:
-      (eventData as any).claudeBranch || (eventData as any).baseBranch || "",
-    BASE_BRANCH: (eventData as any).baseBranch || "",
+      "claudeBranch" in eventData && eventData.claudeBranch
+        ? eventData.claudeBranch
+        : "baseBranch" in eventData && eventData.baseBranch
+          ? eventData.baseBranch
+          : "",
+    BASE_BRANCH:
+      "baseBranch" in eventData && eventData.baseBranch
+        ? eventData.baseBranch
+        : "",
     EVENT_TYPE: eventData.eventName,
     IS_PR: eventData.isPR ? "true" : "false",
   };
