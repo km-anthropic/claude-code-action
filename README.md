@@ -145,6 +145,8 @@ jobs:
           # Or use OAuth token instead:
           # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: set execution mode (default: tag)
+          # mode: "tag"
           # Optional: add custom trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
           # Optional: add assignee trigger for issues
@@ -167,6 +169,7 @@ jobs:
 
 | Input                          | Description                                                                                                          | Required | Default   |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
+| `mode`                         | Execution mode for the action. Currently supports 'tag' (default). Future modes: 'review', 'freeform'                | No       | `tag`     |
 | `anthropic_api_key`            | Anthropic API key (required for direct API, not needed for Bedrock/Vertex)                                           | No\*     | -         |
 | `claude_code_oauth_token`      | Claude Code OAuth token (alternative to anthropic_api_key)                                                           | No\*     | -         |
 | `direct_prompt`                | Direct prompt for Claude to execute automatically without needing a trigger (for automated workflows)                | No       | -         |

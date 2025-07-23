@@ -20,6 +20,11 @@ export type ModeName = (typeof VALID_MODES)[number];
 const modeRegistry = new Map<ModeName, Mode>();
 let initialized = false;
 
+/**
+ * Initializes the mode registry with all available modes.
+ * This function is called lazily to avoid circular dependencies.
+ * @internal
+ */
 function initializeRegistry(): void {
   if (!initialized) {
     const { tagMode } = require("./tag/index");
@@ -46,7 +51,10 @@ export function getMode(name: ModeName): Mode {
   initializeRegistry();
   const mode = modeRegistry.get(name);
   if (!mode) {
-    throw new Error(`Unknown mode: ${name}`);
+    const validModes = Array.from(VALID_MODES).join("', '");
+    throw new Error(
+      `Invalid mode '${name}'. Valid modes are: '${validModes}'. Please check your workflow configuration.`,
+    );
   }
   return mode;
 }
@@ -58,4 +66,14 @@ export function getMode(name: ModeName): Mode {
  */
 export function isValidMode(name: string): name is ModeName {
   return VALID_MODES.includes(name as ModeName);
+}
+
+/**
+ * Resets the mode registry to its initial state.
+ * This is primarily useful for testing purposes.
+ * @internal
+ */
+export function resetRegistry(): void {
+  modeRegistry.clear();
+  initialized = false;
 }
