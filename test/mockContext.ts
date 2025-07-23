@@ -8,6 +8,7 @@ import type {
 } from "@octokit/webhooks-types";
 
 const defaultInputs = {
+  mode: "tag" as const,
   triggerPhrase: "/claude",
   assigneeTrigger: "",
   labelTrigger: "",

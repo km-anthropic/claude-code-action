@@ -60,6 +60,7 @@ describe("checkWritePermissions", () => {
     entityNumber: 1,
     isPR: false,
     inputs: {
+      mode: "tag",
       triggerPhrase: "@claude",
       assigneeTrigger: "",
       labelTrigger: "",

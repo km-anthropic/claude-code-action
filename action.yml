@@ -24,6 +24,12 @@ inputs:
     required: false
     default: "claude/"
 
+  # Mode configuration
+  mode:
+    description: "Execution mode for the action. Currently only 'tag' mode is supported (traditional implementation triggered by mentions/assignments)"
+    required: false
+    default: "tag"
+
   # Claude Code configuration
   model:
     description: "Model to use (provider-specific format required for Bedrock/Vertex)"
@@ -137,6 +143,7 @@ runs:
       run: |
         bun run ${GITHUB_ACTION_PATH}/src/entrypoints/prepare.ts
       env:
+        MODE: ${{ inputs.mode }}
         TRIGGER_PHRASE: ${{ inputs.trigger_phrase }}
         ASSIGNEE_TRIGGER: ${{ inputs.assignee_trigger }}
         LABEL_TRIGGER: ${{ inputs.label_trigger }}

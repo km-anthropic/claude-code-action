@@ -7,6 +7,9 @@ import type {
   PullRequestReviewEvent,
   PullRequestReviewCommentEvent,
 } from "@octokit/webhooks-types";
+import type { ModeName } from "../modes/registry";
+import { DEFAULT_MODE } from "../modes/registry";
+import { isValidMode } from "../modes/registry";
 
 export type ParsedGitHubContext = {
   runId: string;
@@ -27,6 +30,7 @@ export type ParsedGitHubContext = {
   entityNumber: number;
   isPR: boolean;
   inputs: {
+    mode: ModeName;
     triggerPhrase: string;
     assigneeTrigger: string;
     labelTrigger: string;
@@ -46,6 +50,11 @@ export type ParsedGitHubContext = {
 export function parseGitHubContext(): ParsedGitHubContext {
   const context = github.context;
 
+  const modeInput = process.env.MODE ?? DEFAULT_MODE;
+  if (!isValidMode(modeInput)) {
+    throw new Error(`Invalid mode: ${modeInput}.`);
+  }
+
   const commonFields = {
     runId: process.env.GITHUB_RUN_ID!,
     eventName: context.eventName,
@@ -57,6 +66,7 @@ export function parseGitHubContext(): ParsedGitHubContext {
     },
     actor: context.actor,
     inputs: {
+      mode: modeInput as ModeName,
       triggerPhrase: process.env.TRIGGER_PHRASE ?? "@claude",
       assigneeTrigger: process.env.ASSIGNEE_TRIGGER ?? "",
       labelTrigger: process.env.LABEL_TRIGGER ?? "",

@@ -20,6 +20,7 @@ import {
 import type { ParsedGitHubContext } from "../github/context";
 import type { CommonFields, PreparedContext, EventData } from "./types";
 import { GITHUB_SERVER_URL } from "../github/api/config";
+import type { Mode, ModeContext } from "../modes/types";
 export type { CommonFields, PreparedContext } from "./types";
 
 const BASE_ALLOWED_TOOLS = [
@@ -788,30 +789,35 @@ f. If you are unable to complete certain steps, such as running a linter or test
 }
 
 export async function createPrompt(
-  claudeCommentId: number,
-  baseBranch: string | undefined,
-  claudeBranch: string | undefined,
+  mode: Mode,
+  modeContext: ModeContext,
   githubData: FetchDataResult,
   context: ParsedGitHubContext,
 ) {
   try {
+    // Tag mode requires a comment ID
+    if (mode.name === "tag" && !modeContext.commentId) {
+      throw new Error("Tag mode requires a comment ID for prompt generation");
+    }
+
+    // Prepare the context for prompt generation
     const preparedContext = prepareContext(
       context,
-      claudeCommentId.toString(),
-      baseBranch,
-      claudeBranch,
+      modeContext.commentId?.toString() || "",
+      modeContext.baseBranch,
+      modeContext.claudeBranch,
     );
 
-    await mkdir(`${process.env.RUNNER_TEMP}/claude-prompts`, {
-      recursive: true,
-    });
-
-    // Generate the prompt
+    // Generate the prompt directly
     const promptContent = generatePrompt(
       preparedContext,
       githubData,
       context.inputs.useCommitSigning,
     );
+
+    await mkdir(`${process.env.RUNNER_TEMP}/claude-prompts`, {
+      recursive: true,
+    });
 
     // Log the final prompt to console
     console.log("===== FINAL PROMPT =====");

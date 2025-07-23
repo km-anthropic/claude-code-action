@@ -7,17 +7,17 @@
 
 import * as core from "@actions/core";
 import { setupGitHubToken } from "../github/token";
-import { checkTriggerAction } from "../github/validation/trigger";
 import { checkHumanActor } from "../github/validation/actor";
 import { checkWritePermissions } from "../github/validation/permissions";
 import { createInitialComment } from "../github/operations/comments/create-initial";
 import { setupBranch } from "../github/operations/branch";
 import { configureGitAuth } from "../github/operations/git-config";
 import { prepareMcpConfig } from "../mcp/install-mcp-server";
-import { createPrompt } from "../create-prompt";
 import { createOctokit } from "../github/api/client";
 import { fetchGitHubData } from "../github/data/fetcher";
 import { parseGitHubContext } from "../github/context";
+import { getMode } from "../modes/registry";
+import { createPrompt } from "../create-prompt";
 
 async function run() {
   try {
@@ -39,8 +39,9 @@ async function run() {
       );
     }
 
-    // Step 4: Check trigger conditions
-    const containsTrigger = await checkTriggerAction(context);
+    // Step 4: Get mode and check trigger conditions
+    const mode = getMode(context.inputs.mode);
+    const containsTrigger = mode.shouldTrigger(context);
 
     if (!containsTrigger) {
       console.log("No trigger found, skipping remaining steps");
@@ -50,9 +51,16 @@ async function run() {
     // Step 5: Check if actor is human
     await checkHumanActor(octokit.rest, context);
 
-    // Step 6: Create initial tracking comment
-    const commentData = await createInitialComment(octokit.rest, context);
-    const commentId = commentData.id;
+    // Step 6: Create initial tracking comment (mode-aware)
+    // Some modes (e.g., future review/freeform modes) may not need tracking comments
+    let commentId: number | undefined;
+    let commentData:
+      | Awaited<ReturnType<typeof createInitialComment>>
+      | undefined;
+    if (mode.shouldCreateTrackingComment()) {
+      commentData = await createInitialComment(octokit.rest, context);
+      commentId = commentData.id;
+    }
 
     // Step 7: Fetch GitHub data (once for both branch setup and prompt creation)
     const githubData = await fetchGitHubData({
@@ -67,7 +75,7 @@ async function run() {
     const branchInfo = await setupBranch(octokit, githubData, context);
 
     // Step 9: Configure git authentication if not using commit signing
-    if (!context.inputs.useCommitSigning) {
+    if (!context.inputs.useCommitSigning && commentData?.user) {
       try {
         await configureGitAuth(githubToken, context, commentData.user);
       } catch (error) {
@@ -77,13 +85,13 @@ async function run() {
     }
 
     // Step 10: Create prompt file
-    await createPrompt(
+    const modeContext = mode.prepareContext(context, {
       commentId,
-      branchInfo.baseBranch,
-      branchInfo.claudeBranch,
-      githubData,
-      context,
-    );
+      baseBranch: branchInfo.baseBranch,
+      claudeBranch: branchInfo.claudeBranch,
+    });
+
+    await createPrompt(mode, modeContext, githubData, context);
 
     // Step 11: Get MCP configuration
     const additionalMcpConfig = process.env.MCP_CONFIG || "";
@@ -94,7 +102,7 @@ async function run() {
       branch: branchInfo.claudeBranch || branchInfo.currentBranch,
       baseBranch: branchInfo.baseBranch,
       additionalMcpConfig,
-      claudeCommentId: commentId.toString(),
+      claudeCommentId: commentId?.toString() || "",
       allowedTools: context.inputs.allowedTools,
       context,
     });

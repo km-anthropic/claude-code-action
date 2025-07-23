@@ -24,6 +24,7 @@ describe("prepareMcpConfig", () => {
     entityNumber: 123,
     isPR: false,
     inputs: {
+      mode: "tag",
       triggerPhrase: "@claude",
       assigneeTrigger: "",
       labelTrigger: "",
