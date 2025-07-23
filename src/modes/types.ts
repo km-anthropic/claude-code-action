@@ -1,19 +1,19 @@
 import type { ParsedGitHubContext } from "../github/context";
 import type { ModeName } from "./registry";
 
-export interface ModeContext {
+export type ModeContext = {
   mode: ModeName;
   githubContext: ParsedGitHubContext;
   commentId?: number;
   baseBranch?: string;
   claudeBranch?: string;
-}
+};
 
-export interface ModeData {
+export type ModeData = {
   commentId?: number;
   baseBranch?: string;
   claudeBranch?: string;
-}
+};
 
 /**
  * Mode interface for claude-code-action execution modes.
@@ -24,7 +24,7 @@ export interface ModeData {
  * - 'review': Optimized for code reviews without tracking comments
  * - 'freeform': For automation with no trigger checking
  */
-export interface Mode {
+export type Mode = {
   name: ModeName;
   description: string;
 
@@ -53,4 +53,4 @@ export interface Mode {
    * Determines if this mode should create a tracking comment
    */
   shouldCreateTrackingComment(): boolean;
-}
+};

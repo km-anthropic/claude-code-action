@@ -17,7 +17,9 @@ describe("Mode Registry", () => {
 
   test("getMode throws error for invalid mode", () => {
     const invalidMode = "invalid" as unknown as ModeName;
-    expect(() => getMode(invalidMode)).toThrow("Invalid mode 'invalid'. Valid modes are: 'tag'. Please check your workflow configuration.");
+    expect(() => getMode(invalidMode)).toThrow(
+      "Invalid mode 'invalid'. Valid modes are: 'tag'. Please check your workflow configuration.",
+    );
   });
 
   test("isValidMode returns true for tag mode", () => {
