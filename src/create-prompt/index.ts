@@ -808,16 +808,16 @@ export async function createPrompt(
       modeContext.claudeBranch,
     );
 
+    await mkdir(`${process.env.RUNNER_TEMP}/claude-prompts`, {
+      recursive: true,
+    });
+
     // Generate the prompt directly
     const promptContent = generatePrompt(
       preparedContext,
       githubData,
       context.inputs.useCommitSigning,
     );
-
-    await mkdir(`${process.env.RUNNER_TEMP}/claude-prompts`, {
-      recursive: true,
-    });
 
     // Log the final prompt to console
     console.log("===== FINAL PROMPT =====");
