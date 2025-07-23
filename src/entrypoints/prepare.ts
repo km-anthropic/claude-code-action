@@ -75,9 +75,9 @@ async function run() {
     const branchInfo = await setupBranch(octokit, githubData, context);
 
     // Step 9: Configure git authentication if not using commit signing
-    if (!context.inputs.useCommitSigning && commentData?.user) {
+    if (!context.inputs.useCommitSigning) {
       try {
-        await configureGitAuth(githubToken, context, commentData.user);
+        await configureGitAuth(githubToken, context, commentData?.user || null);
       } catch (error) {
         console.error("Failed to configure git authentication:", error);
         throw error;
