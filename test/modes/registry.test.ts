@@ -1,5 +1,10 @@
 import { describe, test, expect } from "bun:test";
-import { getMode, isValidMode, registerMode } from "../../src/modes/registry";
+import {
+  getMode,
+  isValidMode,
+  registerMode,
+  type ModeName,
+} from "../../src/modes/registry";
 import { tagMode } from "../../src/modes/tag";
 import type { Mode } from "../../src/modes/types";
 
@@ -11,7 +16,8 @@ describe("Mode Registry", () => {
   });
 
   test("getMode throws error for invalid mode", () => {
-    expect(() => getMode("invalid" as any)).toThrow("Unknown mode: invalid");
+    const invalidMode = "invalid" as unknown as ModeName;
+    expect(() => getMode(invalidMode)).toThrow("Unknown mode: invalid");
   });
 
   test("isValidMode returns true for tag mode", () => {
@@ -25,12 +31,13 @@ describe("Mode Registry", () => {
   });
 
   test("registerMode allows adding new modes", () => {
+    const testModeName = "test" as unknown as ModeName;
     const mockMode: Mode = {
-      name: "test" as any,
+      name: testModeName,
       description: "Mock mode for testing",
       shouldTrigger: () => false,
       prepareContext: (context) => ({
-        mode: "test" as any,
+        mode: testModeName,
         githubContext: context,
       }),
       getAllowedTools: () => [],
@@ -40,7 +47,7 @@ describe("Mode Registry", () => {
 
     registerMode(mockMode);
 
-    const retrievedMode = getMode("test" as any);
+    const retrievedMode = getMode(testModeName);
     expect(retrievedMode.description).toBe("Mock mode for testing");
   });
 });
