@@ -1,0 +1,37 @@
+name: Claude Agent Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Task to perform"
+        required: true
+        type: choice
+        options:
+          - "analyze-codebase"
+          - "update-dependencies"
+          - "generate-tests"
+
+jobs:
+  agent-automation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: anthropics/claude-code-action@km/add-agent-mode
+        with:
+          mode: agent
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          override_prompt: |
+            ${{
+              github.event.inputs.task == 'analyze-codebase' &&
+              'Analyze the codebase structure and create a GitHub issue with architectural recommendations.' ||
+              
+              github.event.inputs.task == 'update-dependencies' &&
+              'Check for outdated dependencies and create a PR with updates. Include a summary of changes.' ||
+              
+              'Generate unit tests for untested functions. Focus on critical business logic.'
+            }}
