@@ -48,7 +48,7 @@ jobs:
             - Potential bugs or logic errors
             - Security concerns
             - Performance issues
-            
+
             Provide specific, actionable feedback.
           # Agent mode behavior:
           # - NO @claude mention needed - runs immediately

@@ -6,9 +6,15 @@ import type {
   PullRequestEvent,
   PullRequestReviewEvent,
   PullRequestReviewCommentEvent,
+  WorkflowDispatchEvent,
 } from "@octokit/webhooks-types";
 import type { ModeName } from "../modes/types";
 import { DEFAULT_MODE, isValidMode } from "../modes/registry";
+
+// Custom type for schedule event (not a webhook, so not in @octokit/webhooks-types)
+export type ScheduleEvent = {
+  schedule: string; // The cron expression that triggered the event
+};
 
 export type ParsedGitHubContext = {
   runId: string;
@@ -25,7 +31,9 @@ export type ParsedGitHubContext = {
     | IssueCommentEvent
     | PullRequestEvent
     | PullRequestReviewEvent
-    | PullRequestReviewCommentEvent;
+    | PullRequestReviewCommentEvent
+    | WorkflowDispatchEvent
+    | ScheduleEvent;
   entityNumber: number;
   isPR: boolean;
   inputs: {
@@ -129,6 +137,24 @@ export function parseGitHubContext(): ParsedGitHubContext {
         isPR: true,
       };
     }
+    case "workflow_dispatch": {
+      // Manual trigger - has inputs in context.payload.inputs
+      return {
+        ...commonFields,
+        payload: context.payload as WorkflowDispatchEvent,
+        entityNumber: 0, // No associated issue/PR
+        isPR: false,
+      };
+    }
+    case "schedule": {
+      // Scheduled trigger - no user inputs
+      return {
+        ...commonFields,
+        payload: context.payload as ScheduleEvent,
+        entityNumber: 0, // No associated issue/PR
+        isPR: false,
+      };
+    }
     default:
       throw new Error(`Unsupported event type: ${context.eventName}`);
   }
@@ -195,4 +221,16 @@ export function isIssuesAssignedEvent(
   context: ParsedGitHubContext,
 ): context is ParsedGitHubContext & { payload: IssuesAssignedEvent } {
   return isIssuesEvent(context) && context.eventAction === "assigned";
+}
+
+export function isWorkflowDispatchEvent(
+  context: ParsedGitHubContext,
+): context is ParsedGitHubContext & { payload: WorkflowDispatchEvent } {
+  return context.eventName === "workflow_dispatch";
+}
+
+export function isScheduleEvent(
+  context: ParsedGitHubContext,
+): context is ParsedGitHubContext & { payload: ScheduleEvent } {
+  return context.eventName === "schedule";
 }
