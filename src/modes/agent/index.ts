@@ -36,7 +36,13 @@ export const agentMode: Mode = {
     return [];
   },
 
-  shouldCreateTrackingComment() {
+  shouldCreateTrackingComment(context) {
+    if (
+      context.eventName === "workflow_dispatch" ||
+      context.eventName === "schedule"
+    ) {
+      return false;
+    }
     return true;
   },
 };

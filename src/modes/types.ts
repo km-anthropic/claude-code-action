@@ -52,5 +52,5 @@ export type Mode = {
   /**
    * Determines if this mode should create a tracking comment
    */
-  shouldCreateTrackingComment(): boolean;
+  shouldCreateTrackingComment(context: ParsedGitHubContext): boolean;
 };

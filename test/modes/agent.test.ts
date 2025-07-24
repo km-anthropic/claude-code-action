@@ -19,7 +19,8 @@ describe("Agent Mode", () => {
     expect(agentMode.description).toBe(
       "Automation mode that always runs without trigger checking",
     );
-    expect(agentMode.shouldCreateTrackingComment()).toBe(true);
+    // Default context should create tracking comment
+    expect(agentMode.shouldCreateTrackingComment(mockContext)).toBe(false); // workflow_dispatch doesn't create comments
 
     // Tool methods return empty arrays
     expect(agentMode.getAllowedTools()).toEqual([]);
@@ -78,5 +79,41 @@ describe("Agent Mode", () => {
       const context = createMockContext({ eventName, isPR: false });
       expect(agentMode.shouldTrigger(context)).toBe(true);
     });
+  });
+
+  test("shouldCreateTrackingComment returns false for workflow_dispatch and schedule", () => {
+    const workflowDispatchContext = createMockContext({
+      eventName: "workflow_dispatch",
+      isPR: false,
+    });
+    expect(agentMode.shouldCreateTrackingComment(workflowDispatchContext)).toBe(
+      false,
+    );
+
+    const scheduleContext = createMockContext({
+      eventName: "schedule",
+      isPR: false,
+    });
+    expect(agentMode.shouldCreateTrackingComment(scheduleContext)).toBe(false);
+  });
+
+  test("shouldCreateTrackingComment returns true for other events", () => {
+    const issueContext = createMockContext({
+      eventName: "issues",
+      isPR: false,
+    });
+    expect(agentMode.shouldCreateTrackingComment(issueContext)).toBe(true);
+
+    const prContext = createMockContext({
+      eventName: "pull_request",
+      isPR: true,
+    });
+    expect(agentMode.shouldCreateTrackingComment(prContext)).toBe(true);
+
+    const commentContext = createMockContext({
+      eventName: "issue_comment",
+      isPR: false,
+    });
+    expect(agentMode.shouldCreateTrackingComment(commentContext)).toBe(true);
   });
 });

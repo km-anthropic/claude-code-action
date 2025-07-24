@@ -34,7 +34,7 @@ export const tagMode: Mode = {
     return [];
   },
 
-  shouldCreateTrackingComment() {
+  shouldCreateTrackingComment(_context) {
     return true;
   },
 };

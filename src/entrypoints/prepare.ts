@@ -60,7 +60,7 @@ async function run() {
     let commentData:
       | Awaited<ReturnType<typeof createInitialComment>>
       | undefined;
-    if (mode.shouldCreateTrackingComment()) {
+    if (mode.shouldCreateTrackingComment(context)) {
       commentData = await createInitialComment(octokit.rest, context);
       commentId = commentData.id;
     }
