@@ -1,7 +1,7 @@
 name: Claude Mode Examples
 
 on:
-  # Common events for both modes
+  # Tag Mode events - requires @claude mentions
   issue_comment:
     types: [created]
   issues:
@@ -9,9 +9,22 @@ on:
   pull_request:
     types: [opened]
 
+  # Agent Mode event - manual trigger for automation
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Task to perform"
+        required: true
+        type: choice
+        options:
+          - "analyze-codebase"
+          - "update-dependencies"
+          - "generate-tests"
+
 jobs:
   # Tag Mode (Default) - Traditional implementation
   tag-mode-example:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,7 +32,7 @@ jobs:
       issues: write
       id-token: write
     steps:
-      - uses: anthropics/claude-code-action@main
+      - uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Tag mode (default) behavior:
@@ -29,28 +42,30 @@ jobs:
           # - Perfect for: Interactive Q&A, on-demand code changes
 
   # Agent Mode - Automation without triggers
-  agent-mode-auto-review:
-    # Automatically review every new PR
-    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+  agent-mode-automation:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
       issues: write
       id-token: write
     steps:
-      - uses: anthropics/claude-code-action@main
+      - uses: anthropics/claude-code-action@beta
         with:
           mode: agent
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           override_prompt: |
-            Review this PR for code quality. Focus on:
-            - Potential bugs or logic errors
-            - Security concerns
-            - Performance issues
-
-            Provide specific, actionable feedback.
+            ${{
+              github.event.inputs.task == 'analyze-codebase' &&
+              'Analyze the codebase structure and create a GitHub issue with architectural recommendations.' ||
+              
+              github.event.inputs.task == 'update-dependencies' &&
+              'Check for outdated dependencies and create a PR with updates. Include a summary of changes.' ||
+              
+              'Generate unit tests for untested functions. Focus on critical business logic.'
+            }}
           # Agent mode behavior:
           # - NO @claude mention needed - runs immediately
           # - Enables true automation (impossible with tag mode)
-          # - Perfect for: CI/CD integration, automatic reviews, label-based workflows
+          # - Perfect for: CI/CD integration, scheduled tasks, workflow_dispatch
