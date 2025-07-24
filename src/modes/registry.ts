@@ -1,57 +1,40 @@
 /**
  * Mode Registry for claude-code-action
  *
- * This registry manages all available execution modes. Modes are loaded lazily
- * to avoid circular dependencies.
+ * This module provides access to all available execution modes.
  *
  * To add a new mode:
  * 1. Add the mode name to VALID_MODES below
  * 2. Create the mode implementation in a new directory (e.g., src/modes/review/)
- * 3. Register it in initializeRegistry() function
+ * 3. Import and add it to the modes object below
  * 4. Update action.yml description to mention the new mode
  */
 
 import type { Mode } from "./types";
+import { tagMode } from "./tag/index";
 
 export const DEFAULT_MODE = "tag" as const;
 export const VALID_MODES = ["tag"] as const;
 export type ModeName = (typeof VALID_MODES)[number];
 
-const modeRegistry = new Map<ModeName, Mode>();
-let initialized = false;
-
 /**
- * Initializes the mode registry with all available modes.
- * This function is called lazily to avoid circular dependencies.
- * @internal
+ * All available modes.
+ * Add new modes here as they are created.
  */
-function initializeRegistry(): void {
-  if (!initialized) {
-    const { tagMode } = require("./tag/index");
-    modeRegistry.set("tag", tagMode);
-    initialized = true;
-  }
-}
+const modes = {
+  tag: tagMode,
+} as const satisfies Record<ModeName, Mode>;
 
 /**
- * Registers a new mode in the registry.
- * @param mode The mode to register
- */
-export function registerMode(mode: Mode): void {
-  modeRegistry.set(mode.name, mode);
-}
-
-/**
- * Retrieves a mode from the registry by name.
+ * Retrieves a mode by name.
  * @param name The mode name to retrieve
  * @returns The requested mode
  * @throws Error if the mode is not found
  */
 export function getMode(name: ModeName): Mode {
-  initializeRegistry();
-  const mode = modeRegistry.get(name);
+  const mode = modes[name];
   if (!mode) {
-    const validModes = Array.from(VALID_MODES).join("', '");
+    const validModes = VALID_MODES.join("', '");
     throw new Error(
       `Invalid mode '${name}'. Valid modes are: '${validModes}'. Please check your workflow configuration.`,
     );
@@ -66,14 +49,4 @@ export function getMode(name: ModeName): Mode {
  */
 export function isValidMode(name: string): name is ModeName {
   return VALID_MODES.includes(name as ModeName);
-}
-
-/**
- * Resets the mode registry to its initial state.
- * This is primarily useful for testing purposes.
- * @internal
- */
-export function resetRegistry(): void {
-  modeRegistry.clear();
-  initialized = false;
 }

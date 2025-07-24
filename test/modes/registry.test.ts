@@ -1,12 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import {
-  getMode,
-  isValidMode,
-  registerMode,
-  type ModeName,
-} from "../../src/modes/registry";
+import { getMode, isValidMode, type ModeName } from "../../src/modes/registry";
 import { tagMode } from "../../src/modes/tag";
-import type { Mode } from "../../src/modes/types";
 
 describe("Mode Registry", () => {
   test("getMode returns tag mode by default", () => {
@@ -30,26 +24,5 @@ describe("Mode Registry", () => {
     expect(isValidMode("invalid")).toBe(false);
     expect(isValidMode("review")).toBe(false);
     expect(isValidMode("freeform")).toBe(false);
-  });
-
-  test("registerMode allows adding new modes", () => {
-    const testModeName = "test" as unknown as ModeName;
-    const mockMode: Mode = {
-      name: testModeName,
-      description: "Mock mode for testing",
-      shouldTrigger: () => false,
-      prepareContext: (context) => ({
-        mode: testModeName,
-        githubContext: context,
-      }),
-      getAllowedTools: () => [],
-      getDisallowedTools: () => [],
-      shouldCreateTrackingComment: () => false,
-    };
-
-    registerMode(mockMode);
-
-    const retrievedMode = getMode(testModeName);
-    expect(retrievedMode.description).toBe("Mock mode for testing");
   });
 });
