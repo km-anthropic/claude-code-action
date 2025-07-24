@@ -21,7 +21,7 @@ export type BranchInfo = {
 
 export async function setupBranch(
   octokits: Octokits,
-  githubData: FetchDataResult,
+  githubData: FetchDataResult | null,
   context: ParsedGitHubContext,
 ): Promise<BranchInfo> {
   const { owner, repo } = context.repository;
@@ -29,7 +29,7 @@ export async function setupBranch(
   const { baseBranch, branchPrefix } = context.inputs;
   const isPR = context.isPR;
 
-  if (isPR) {
+  if (isPR && githubData) {
     const prData = githubData.contextData as GitHubPullRequest;
     const prState = prData.state;
 

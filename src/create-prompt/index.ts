@@ -407,13 +407,13 @@ export function getEventTypeAndContext(envVars: PreparedContext): {
 
 function getCommitInstructions(
   eventData: EventData,
-  githubData: FetchDataResult,
+  githubData: FetchDataResult | null,
   context: PreparedContext,
   useCommitSigning: boolean,
 ): string {
   const coAuthorLine =
-    (githubData.triggerDisplayName ?? context.triggerUsername !== "Unknown")
-      ? `Co-authored-by: ${githubData.triggerDisplayName ?? context.triggerUsername} <${context.triggerUsername}@users.noreply.github.com>`
+    (githubData?.triggerDisplayName ?? context.triggerUsername !== "Unknown")
+      ? `Co-authored-by: ${githubData?.triggerDisplayName ?? context.triggerUsername} <${context.triggerUsername}@users.noreply.github.com>`
       : "";
 
   if (useCommitSigning) {
@@ -466,9 +466,12 @@ function getCommitInstructions(
 function substitutePromptVariables(
   template: string,
   context: PreparedContext,
-  githubData: FetchDataResult,
+  githubData: FetchDataResult | null,
 ): string {
-  const { contextData, comments, reviewData, changedFilesWithSHA } = githubData;
+  const contextData = githubData?.contextData;
+  const comments = githubData?.comments || [];
+  const reviewData = githubData?.reviewData || null;
+  const changedFilesWithSHA = githubData?.changedFilesWithSHA || [];
   const { eventData } = context;
 
   const variables: Record<string, string> = {
@@ -483,20 +486,20 @@ function substitutePromptVariables(
     ISSUE_TITLE: !eventData.isPR && contextData?.title ? contextData.title : "",
     PR_BODY:
       eventData.isPR && contextData?.body
-        ? formatBody(contextData.body, githubData.imageUrlMap)
+        ? formatBody(contextData.body, githubData?.imageUrlMap)
         : "",
     ISSUE_BODY:
       !eventData.isPR && contextData?.body
-        ? formatBody(contextData.body, githubData.imageUrlMap)
+        ? formatBody(contextData.body, githubData?.imageUrlMap)
         : "",
     PR_COMMENTS: eventData.isPR
-      ? formatComments(comments, githubData.imageUrlMap)
+      ? formatComments(comments, githubData?.imageUrlMap)
       : "",
     ISSUE_COMMENTS: !eventData.isPR
-      ? formatComments(comments, githubData.imageUrlMap)
+      ? formatComments(comments, githubData?.imageUrlMap)
       : "",
     REVIEW_COMMENTS: eventData.isPR
-      ? formatReviewComments(reviewData, githubData.imageUrlMap)
+      ? formatReviewComments(reviewData, githubData?.imageUrlMap)
       : "",
     CHANGED_FILES: eventData.isPR
       ? formatChangedFilesWithSHA(changedFilesWithSHA)
@@ -528,7 +531,7 @@ function substitutePromptVariables(
 
 export function generatePrompt(
   context: PreparedContext,
-  githubData: FetchDataResult,
+  githubData: FetchDataResult | null,
   useCommitSigning: boolean,
 ): string {
   if (context.overridePrompt) {
@@ -539,18 +542,16 @@ export function generatePrompt(
     );
   }
 
-  const {
-    contextData,
-    comments,
-    changedFilesWithSHA,
-    reviewData,
-    imageUrlMap,
-  } = githubData;
+  const contextData = githubData?.contextData;
+  const comments = githubData?.comments || [];
+  const changedFilesWithSHA = githubData?.changedFilesWithSHA || [];
+  const reviewData = githubData?.reviewData || null;
+  const imageUrlMap = githubData?.imageUrlMap;
   const { eventData } = context;
 
   const { eventType, triggerContext } = getEventTypeAndContext(context);
 
-  const formattedContext = formatContext(contextData, eventData.isPR);
+  const formattedContext = contextData ? formatContext(contextData, eventData.isPR) : "";
   const formattedComments = formatComments(comments, imageUrlMap);
   const formattedReviewComments = eventData.isPR
     ? formatReviewComments(reviewData, imageUrlMap)
@@ -606,7 +607,7 @@ ${
 }
 <claude_comment_id>${context.claudeCommentId}</claude_comment_id>
 <trigger_username>${context.triggerUsername ?? "Unknown"}</trigger_username>
-<trigger_display_name>${githubData.triggerDisplayName ?? context.triggerUsername ?? "Unknown"}</trigger_display_name>
+<trigger_display_name>${githubData?.triggerDisplayName ?? context.triggerUsername ?? "Unknown"}</trigger_display_name>
 <trigger_phrase>${context.triggerPhrase}</trigger_phrase>
 ${
   (eventData.eventName === "issue_comment" ||
@@ -797,7 +798,7 @@ f. If you are unable to complete certain steps, such as running a linter or test
 export async function createPrompt(
   mode: Mode,
   modeContext: ModeContext,
-  githubData: FetchDataResult,
+  githubData: FetchDataResult | null,
   context: ParsedGitHubContext,
 ) {
   try {

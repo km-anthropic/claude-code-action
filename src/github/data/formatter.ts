@@ -32,12 +32,14 @@ Issue State: ${issueData.state}`;
 
 export function formatBody(
   body: string,
-  imageUrlMap: Map<string, string>,
+  imageUrlMap?: Map<string, string>,
 ): string {
   let processedBody = body;
 
-  for (const [originalUrl, localPath] of imageUrlMap) {
-    processedBody = processedBody.replaceAll(originalUrl, localPath);
+  if (imageUrlMap) {
+    for (const [originalUrl, localPath] of imageUrlMap) {
+      processedBody = processedBody.replaceAll(originalUrl, localPath);
+    }
   }
 
   processedBody = sanitizeContent(processedBody);

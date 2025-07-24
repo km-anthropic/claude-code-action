@@ -66,13 +66,17 @@ async function run() {
     }
 
     // Step 7: Fetch GitHub data (once for both branch setup and prompt creation)
-    const githubData = await fetchGitHubData({
-      octokits: octokit,
-      repository: `${context.repository.owner}/${context.repository.repo}`,
-      prNumber: context.entityNumber.toString(),
-      isPR: context.isPR,
-      triggerUsername: context.actor,
-    });
+    // Skip fetching issue/PR data for workflow_dispatch and schedule events
+    let githubData: Awaited<ReturnType<typeof fetchGitHubData>> | null = null;
+    if (context.eventName !== "workflow_dispatch" && context.eventName !== "schedule") {
+      githubData = await fetchGitHubData({
+        octokits: octokit,
+        repository: `${context.repository.owner}/${context.repository.repo}`,
+        prNumber: context.entityNumber.toString(),
+        isPR: context.isPR,
+        triggerUsername: context.actor,
+      });
+    }
 
     // Step 8: Setup branch
     const branchInfo = await setupBranch(octokit, githubData, context);
