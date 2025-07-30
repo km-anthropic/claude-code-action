@@ -530,6 +530,7 @@ export function generatePrompt(
   context: PreparedContext,
   githubData: FetchDataResult,
   useCommitSigning: boolean,
+  mode?: Mode,
 ): string {
   if (context.overridePrompt) {
     return substitutePromptVariables(
@@ -537,6 +538,14 @@ export function generatePrompt(
       context,
       githubData,
     );
+  }
+
+  // Delegate to mode-specific prompt generators if available
+  if (mode?.generatePrompt) {
+    const modePrompt = mode.generatePrompt(context, githubData);
+    if (modePrompt) {
+      return modePrompt;
+    }
   }
 
   const {
@@ -808,9 +817,11 @@ export async function createPrompt(
   try {
     // Prepare the context for prompt generation
     let claudeCommentId: string = "";
-    if (mode.name === "tag") {
+    if (mode.name === "tag" || mode.name === "review") {
       if (!modeContext.commentId) {
-        throw new Error("Tag mode requires a comment ID for prompt generation");
+        throw new Error(
+          `${mode.name} mode requires a comment ID for prompt generation`,
+        );
       }
       claudeCommentId = modeContext.commentId.toString();
     }
@@ -831,6 +842,7 @@ export async function createPrompt(
       preparedContext,
       githubData,
       context.inputs.useCommitSigning,
+      mode,
     );
 
     // Log the final prompt to console

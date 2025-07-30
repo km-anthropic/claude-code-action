@@ -1,6 +1,6 @@
 import type { GitHubContext } from "../github/context";
 
-export type ModeName = "tag" | "agent";
+export type ModeName = "tag" | "agent" | "review";
 
 export type ModeContext = {
   mode: ModeName;
@@ -53,6 +53,16 @@ export type Mode = {
    * Determines if this mode should create a tracking comment
    */
   shouldCreateTrackingComment(): boolean;
+
+  /**
+   * Generates a custom prompt for this mode (optional).
+   * If not provided, the default prompt will be used.
+   * @returns The prompt string or undefined to use default
+   */
+  generatePrompt?(
+    context: any, // PreparedContext from create-prompt
+    githubData: any, // FetchDataResult from github/data/fetcher
+  ): string | undefined;
 
   /**
    * Prepares the GitHub environment for this mode.
