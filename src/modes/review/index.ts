@@ -30,10 +30,10 @@ export const reviewMode: Mode = {
   description: "Code review mode for inline comments and suggestions",
 
   shouldTrigger(context) {
-    if (!isEntityContext(context)) {
-      return false;
-    }
-    return checkContainsTrigger(context);
+    return (
+      isEntityContext(context) &&
+      (context.eventName === "pull_request" || checkContainsTrigger(context))
+    );
   },
 
   prepareContext(context, data) {
