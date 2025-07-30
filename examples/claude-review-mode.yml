@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0  # Full history for better diff analysis
 
       - name: Code Review with Claude
-        uses: anthropics/claude-code-action@km/add-review-mode
+        uses: anthropics/claude-code-action@beta
         with:
           mode: review
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
