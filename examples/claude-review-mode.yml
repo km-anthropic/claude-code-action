@@ -19,7 +19,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-      # Note: No id-token needed for review mode!
+      # Note: id-token not needed since review mode doesn't use OIDC for GitHub auth
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,8 +30,8 @@ jobs:
         uses: anthropics/claude-code-action@km/add-review-mode
         with:
           mode: review
-          # No anthropic_api_key needed - uses default GitHub token
-          # No github_token needed - uses default GITHUB_TOKEN
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # github_token not needed - uses default GITHUB_TOKEN for GitHub operations
           timeout_minutes: "30"
           custom_instructions: |
             Focus on:
