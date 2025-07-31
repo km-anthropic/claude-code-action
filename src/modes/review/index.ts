@@ -47,7 +47,17 @@ export const reviewMode: Mode = {
   },
 
   getAllowedTools() {
-    return ["mcp__github__*"];
+    return [
+      "mcp__github__*",
+      "mcp__github_comment__*",
+      // Explicitly list review tools in case wildcards aren't working
+      "mcp__github__create_pending_pull_request_review",
+      "mcp__github__add_comment_to_pending_review", 
+      "mcp__github__submit_pending_pull_request_review",
+      "mcp__github__get_pull_request",
+      "mcp__github__get_pull_request_diff",
+      "mcp__github__get_pull_request_files"
+    ];
   },
 
   getDisallowedTools() {

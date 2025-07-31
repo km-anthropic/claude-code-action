@@ -19,6 +19,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      statuses: write  # May be needed for some review operations
+      checks: write    # May be needed for review checks
       # Note: id-token not needed since review mode doesn't use OIDC for GitHub auth
     steps:
       - name: Checkout repository
