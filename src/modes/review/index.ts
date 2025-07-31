@@ -233,6 +233,32 @@ Then proceed with the review workflow described above.`;
 
     await createPrompt(reviewMode, modeContext, githubData, context);
 
+    // Export tool environment variables for review mode
+    const baseTools = [
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "LS",
+      "Read",
+      "Write",
+    ];
+
+    // Add mode-specific and user-specified tools
+    const allowedTools = [
+      ...baseTools,
+      ...this.getAllowedTools(),
+      ...context.inputs.allowedTools,
+    ];
+    const disallowedTools = [
+      "WebSearch",
+      "WebFetch",
+      ...context.inputs.disallowedTools,
+    ];
+
+    core.exportVariable("ALLOWED_TOOLS", allowedTools.join(","));
+    core.exportVariable("DISALLOWED_TOOLS", disallowedTools.join(","));
+
     const additionalMcpConfig = process.env.MCP_CONFIG || "";
     const mcpConfig = await prepareMcpConfig({
       githubToken,
