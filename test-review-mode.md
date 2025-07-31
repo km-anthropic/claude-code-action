@@ -20,7 +20,7 @@ function processUser(user) {
     var age = user.age;
     
     if (age > 18) {
-        console.log(name + " is an adult");
+        console.log(`${name} is an adult`);
     }
     
     // SQL injection vulnerability
