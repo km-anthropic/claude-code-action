@@ -80,8 +80,9 @@ export const agentMode: Mode = {
       ...context.inputs.disallowedTools,
     ];
 
-    core.exportVariable("ALLOWED_TOOLS", allowedTools.join(","));
-    core.exportVariable("DISALLOWED_TOOLS", disallowedTools.join(","));
+    // Export as INPUT_ prefixed variables for the base action
+    core.exportVariable("INPUT_ALLOWED_TOOLS", allowedTools.join(","));
+    core.exportVariable("INPUT_DISALLOWED_TOOLS", disallowedTools.join(","));
 
     // Agent mode uses a minimal MCP configuration
     // We don't need comment servers or PR-specific tools for automation
