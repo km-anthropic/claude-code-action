@@ -41,6 +41,11 @@ This command will guide you through setting up the GitHub app and required secre
 
 Having issues or questions? Check out our [Frequently Asked Questions](./docs/faq.md) for solutions to common problems and detailed explanations of Claude's capabilities and limitations.
 
+## 😄 Developer Humor
+
+**Why do programmers prefer dark mode?**
+Because light attracts bugs! 🐛
+
 ## License
 
 This project is licensed under the MIT License—see the LICENSE file for details.
