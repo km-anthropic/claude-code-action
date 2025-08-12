@@ -56,6 +56,7 @@ async function run() {
       mode,
       githubToken,
     });
+    core.setOutput("GITHUB_TOKEN", githubToken);
 
     // MCP config is handled by individual modes (tag/agent) and included in their claude_args output
 

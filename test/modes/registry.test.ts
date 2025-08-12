@@ -82,6 +82,10 @@ describe("Mode Registry", () => {
   });
 
   test("getMode uses tag mode for @claude mention without prompt", () => {
+    // Ensure PROMPT env var is not set (clean up from previous tests)
+    const originalPrompt = process.env.PROMPT;
+    delete process.env.PROMPT;
+
     const contextWithMention = createMockContext({
       eventName: "issue_comment",
       payload: {
@@ -92,11 +96,17 @@ describe("Mode Registry", () => {
       } as any,
       inputs: {
         triggerPhrase: "@claude",
+        prompt: "",
       } as any,
     });
     const mode = getMode(contextWithMention);
     expect(mode).toBe(tagMode);
     expect(mode.name).toBe("tag");
+
+    // Restore original value if it existed
+    if (originalPrompt !== undefined) {
+      process.env.PROMPT = originalPrompt;
+    }
   });
 
   // Removed test - explicit mode override no longer supported in v1.0

@@ -1,15 +1,29 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
 import { agentMode } from "../../src/modes/agent";
 import type { GitHubContext } from "../../src/github/context";
 import { createMockContext, createMockAutomationContext } from "../mockContext";
+import * as core from "@actions/core";
 
 describe("Agent Mode", () => {
   let mockContext: GitHubContext;
+  let exportVariableSpy: any;
+  let setOutputSpy: any;
 
   beforeEach(() => {
     mockContext = createMockAutomationContext({
       eventName: "workflow_dispatch",
     });
+    exportVariableSpy = spyOn(core, "exportVariable").mockImplementation(
+      () => {},
+    );
+    setOutputSpy = spyOn(core, "setOutput").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    exportVariableSpy?.mockClear();
+    setOutputSpy?.mockClear();
+    exportVariableSpy?.mockRestore();
+    setOutputSpy?.mockRestore();
   });
 
   test("agent mode has correct properties", () => {
@@ -79,5 +93,67 @@ describe("Agent Mode", () => {
             });
       expect(agentMode.shouldTrigger(contextWithPrompt)).toBe(true);
     });
+  });
+
+  test("prepare method passes through claude_args", async () => {
+    // Clear any previous calls before this test
+    exportVariableSpy.mockClear();
+    setOutputSpy.mockClear();
+
+    const contextWithCustomArgs = createMockAutomationContext({
+      eventName: "workflow_dispatch",
+    });
+
+    // Set CLAUDE_ARGS environment variable
+    process.env.CLAUDE_ARGS = "--model claude-sonnet-4 --max-turns 10";
+
+    const mockOctokit = {} as any;
+    const result = await agentMode.prepare({
+      context: contextWithCustomArgs,
+      octokit: mockOctokit,
+      githubToken: "test-token",
+    });
+
+    // Verify claude_args includes MCP config and user args
+    const callArgs = setOutputSpy.mock.calls[0];
+    expect(callArgs[0]).toBe("claude_args");
+    expect(callArgs[1]).toContain("--mcp-config");
+    expect(callArgs[1]).toContain("--model claude-sonnet-4 --max-turns 10");
+
+    // Verify return structure
+    expect(result).toEqual({
+      commentId: undefined,
+      branchInfo: {
+        baseBranch: "",
+        currentBranch: "",
+        claudeBranch: undefined,
+      },
+      mcpConfig: expect.any(String),
+    });
+
+    // Clean up
+    delete process.env.CLAUDE_ARGS;
+  });
+
+  test("prepare method creates prompt file with correct content", async () => {
+    const contextWithPrompts = createMockAutomationContext({
+      eventName: "workflow_dispatch",
+    });
+    // In v1-dev, we only have the unified prompt field
+    contextWithPrompts.inputs.prompt = "Custom prompt content";
+
+    const mockOctokit = {} as any;
+    await agentMode.prepare({
+      context: contextWithPrompts,
+      octokit: mockOctokit,
+      githubToken: "test-token",
+    });
+
+    // Note: We can't easily test file creation in this unit test,
+    // but we can verify the method completes without errors
+    // Agent mode now includes MCP config even with empty user args
+    const callArgs = setOutputSpy.mock.calls[0];
+    expect(callArgs[0]).toBe("claude_args");
+    expect(callArgs[1]).toContain("--mcp-config");
   });
 });

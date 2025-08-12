@@ -1,0 +1,39 @@
+name: Auto review PRs
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  auto-review:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Auto review PR
+        uses: ./
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Please review this PR and provide comprehensive feedback.
+            
+            Focus on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Suggestions for improvements
+            - Overall architecture and design decisions
+            - Documentation consistency
+            
+            After completing your review, post it as a comment on the PR using this command:
+            gh pr comment ${{ github.event.pull_request.number }} --body "YOUR_REVIEW_HERE"
+            
+            Format your review nicely with markdown, using headers, bullet points, and code blocks as needed.
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--allowedTools Bash(gh pr comment:*),Read,Grep,Glob"
