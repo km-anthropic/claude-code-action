@@ -14,3 +14,4 @@ Testing that the GitHub Action can:
 - Updated README title
 - Added this test file
 - Testing the review workflow
+- Testing with MCP tools allowed
