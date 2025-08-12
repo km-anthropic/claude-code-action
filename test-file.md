@@ -17,3 +17,4 @@ Testing that the GitHub Action can:
 - Testing with MCP tools allowed
 - Fixed quoting issues
 - Explicitly listed MCP tools
+- Using correct PR number in prompt
