@@ -1,14 +1,15 @@
 ![Claude Code Action responding to a comment](https://github.com/user-attachments/assets/1d60c2e9-82ed-4ee5-b749-f9e021c85f4d)
 
-# Claude Code Action (Final Test)
+# Claude Code Action
 
-A general-purpose [Claude Code](https://claude.ai/code) action for GitHub PRs and issues that can answer questions and implement code changes. This action listens for a trigger phrase in comments and activates Claude act on the request. It supports multiple authentication methods including Anthropic direct API, Amazon Bedrock, and Google Vertex AI.
+A powerful GitHub Action powered by [Claude Code](https://claude.ai/code) that can automatically review PRs, answer questions, and implement code changes. This action listens for a trigger phrase in comments and activates Claude to act on the request. It supports multiple authentication methods including Anthropic direct API, Amazon Bedrock, and Google Vertex AI.
 
 ## Features
 
-- 🤖 **Interactive Code Assistant**: Claude can answer questions about code, architecture, and programming
-- 🔍 **Code Review**: Analyzes PR changes and suggests improvements
-- ✨ **Code Implementation**: Can implement simple fixes, refactoring, and even new features
+- 🤖 **Interactive Code Assistant**: Claude can answer questions about code, architecture, and programming concepts
+- 🔍 **Automated Code Review**: Automatically analyzes PR changes and provides constructive feedback
+- ✨ **Code Implementation**: Can implement bug fixes, refactoring, and even complete new features
+- 🚀 **Fast Response Time**: Typically responds within seconds to minutes
 - 💬 **PR/Issue Integration**: Works seamlessly with GitHub comments and PR reviews
 - 🛠️ **Flexible Tool Access**: Access to GitHub APIs and file operations (additional tools can be enabled via configuration)
 - 📋 **Progress Tracking**: Visual progress indicators with checkboxes that dynamically update as Claude completes tasks
