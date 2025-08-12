@@ -39,8 +39,10 @@ export const agentMode: Mode = {
     return false;
   },
 
-  async prepare({ context }: ModeOptions): Promise<ModeResult> {
+  async prepare({ context, githubToken }: ModeOptions): Promise<ModeResult> {
     // Agent mode handles automation events and any event with explicit prompts
+    
+    console.log(`Agent mode: githubToken provided: ${!!githubToken}, length: ${githubToken?.length || 0}`);
 
     // TODO: handle by createPrompt (similar to tag and review modes)
     // Create prompt directory
@@ -60,10 +62,27 @@ export const agentMode: Mode = {
     // Agent mode: User has full control via claudeArgs
     // No default tools are enforced - Claude Code's defaults will apply
 
-    // Agent mode uses a minimal MCP configuration
-    // We don't need comment servers or PR-specific tools for automation
+    // Always include the GitHub comment server in agent mode
+    // This ensures GitHub tools (PR reviews, comments, etc.) work out of the box
+    // without requiring users to manually configure the MCP server
     const mcpConfig: any = {
-      mcpServers: {},
+      mcpServers: {
+        "github-comment-server": {
+          command: "bun",
+          args: [
+            "run",
+            `${process.env.GITHUB_ACTION_PATH}/src/mcp/github-comment-server.ts`,
+          ],
+          env: {
+            GITHUB_TOKEN: githubToken || "",
+            REPO_OWNER: context.repository.owner,
+            REPO_NAME: context.repository.repo,
+            GITHUB_EVENT_NAME: process.env.GITHUB_EVENT_NAME || "",
+            GITHUB_API_URL:
+              process.env.GITHUB_API_URL || "https://api.github.com",
+          },
+        },
+      },
     };
 
     // Add user-provided additional MCP config if any
@@ -72,16 +91,24 @@ export const agentMode: Mode = {
       try {
         const additional = JSON.parse(additionalMcpConfig);
         if (additional && typeof additional === "object") {
-          Object.assign(mcpConfig, additional);
+          // Merge mcpServers if both have them
+          if (additional.mcpServers && mcpConfig.mcpServers) {
+            Object.assign(mcpConfig.mcpServers, additional.mcpServers);
+          } else {
+            Object.assign(mcpConfig, additional);
+          }
         }
       } catch (error) {
         core.warning(`Failed to parse additional MCP config: ${error}`);
       }
     }
 
-    // Agent mode: pass through user's claude_args without modification
+    // Agent mode: pass through user's claude_args with MCP config
     const userClaudeArgs = process.env.CLAUDE_ARGS || "";
-    core.setOutput("claude_args", userClaudeArgs);
+    const escapedMcpConfig = JSON.stringify(mcpConfig).replace(/'/g, "'\\''");
+    const claudeArgs =
+      `--mcp-config '${escapedMcpConfig}' ${userClaudeArgs}`.trim();
+    core.setOutput("claude_args", claudeArgs);
 
     return {
       commentId: undefined,

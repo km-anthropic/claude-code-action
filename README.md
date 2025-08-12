@@ -1,6 +1,6 @@
 ![Claude Code Action responding to a comment](https://github.com/user-attachments/assets/1d60c2e9-82ed-4ee5-b749-f9e021c85f4d)
 
-# Claude Code Action
+# Claude Code Action - No Approval Test
 
 A general-purpose [Claude Code](https://claude.ai/code) action for GitHub PRs and issues that can answer questions and implement code changes. This action listens for a trigger phrase in comments and activates Claude act on the request. It supports multiple authentication methods including Anthropic direct API, Amazon Bedrock, and Google Vertex AI.
 
@@ -13,6 +13,19 @@ A general-purpose [Claude Code](https://claude.ai/code) action for GitHub PRs an
 - 🛠️ **Flexible Tool Access**: Access to GitHub APIs and file operations (additional tools can be enabled via configuration)
 - 📋 **Progress Tracking**: Visual progress indicators with checkboxes that dynamically update as Claude completes tasks
 - 🏃 **Runs on Your Infrastructure**: The action executes entirely on your own GitHub runner (Anthropic API calls go to your chosen provider)
+
+## ⚠️ **BREAKING CHANGES COMING IN v1.0** ⚠️
+
+**We're planning a major update that will significantly change how this action works.** The new version will:
+
+- ✨ Automatically select the appropriate mode (no more `mode` input)
+- 🔧 Simplify configuration with unified `prompt` and `claude_args`
+- 🚀 Align more closely with the Claude Code SDK capabilities
+- 💥 Remove multiple inputs like `direct_prompt`, `custom_instructions`, and others
+
+**[→ Read the full v1.0 roadmap and provide feedback](https://github.com/anthropics/claude-code-action/discussions/428)**
+
+---
 
 ## Quickstart
 
@@ -44,3 +57,6 @@ Having issues or questions? Check out our [Frequently Asked Questions](./docs/fa
 ## License
 
 This project is licensed under the MIT License—see the LICENSE file for details.
+
+
+## Testing token fix

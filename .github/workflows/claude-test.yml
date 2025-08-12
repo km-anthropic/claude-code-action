@@ -27,11 +27,11 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      id-token: write  # Required for OIDC token exchange
+      id-token: write # Required for OIDC token exchange
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Run Claude Code
         uses: km-anthropic/claude-code-action@v1-dev
         with:

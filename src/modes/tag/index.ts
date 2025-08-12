@@ -115,12 +115,12 @@ export const tagMode: Mode = {
     });
 
     // Don't output mcp_config separately anymore - include in claude_args
-    
+
     // Build claude_args for tag mode with required tools
     // Tag mode REQUIRES these tools to function properly
     const tagModeTools = [
       "Edit",
-      "MultiEdit", 
+      "MultiEdit",
       "Glob",
       "Grep",
       "LS",
@@ -128,7 +128,7 @@ export const tagMode: Mode = {
       "Write",
       "mcp__github_comment__update_claude_comment",
     ];
-    
+
     // Add git commands when not using commit signing
     if (!context.inputs.useCommitSigning) {
       tagModeTools.push(
@@ -138,28 +138,28 @@ export const tagMode: Mode = {
         "Bash(git status:*)",
         "Bash(git diff:*)",
         "Bash(git log:*)",
-        "Bash(git rm:*)"
+        "Bash(git rm:*)",
       );
     } else {
       // When using commit signing, use MCP file ops tools
       tagModeTools.push(
         "mcp__github_file_ops__commit_files",
-        "mcp__github_file_ops__delete_files"
+        "mcp__github_file_ops__delete_files",
       );
     }
-    
+
     const userClaudeArgs = process.env.CLAUDE_ARGS || "";
-    
+
     // Build complete claude_args with MCP config (as JSON string), tools, and user args
     // Note: Once Claude supports multiple --mcp-config flags, we can pass as file path
     // Escape single quotes in JSON to prevent shell injection
     const escapedMcpConfig = mcpConfig.replace(/'/g, "'\\''");
     let claudeArgs = `--mcp-config '${escapedMcpConfig}' `;
-    claudeArgs += `--allowedTools "${tagModeTools.join(',')}" `;
+    claudeArgs += `--allowedTools "${tagModeTools.join(",")}" `;
     if (userClaudeArgs) {
       claudeArgs += userClaudeArgs;
     }
-    
+
     core.setOutput("claude_args", claudeArgs.trim());
 
     return {
