@@ -16,3 +16,4 @@ Testing that the GitHub Action can:
 - Testing the review workflow
 - Testing with MCP tools allowed
 - Fixed quoting issues
+- Explicitly listed MCP tools
