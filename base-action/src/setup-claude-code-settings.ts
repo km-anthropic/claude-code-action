@@ -81,7 +81,9 @@ export async function setupClaudeCodeSettings(
   }
 
   // Copy subagent files from repository to Claude's agents directory
-  const repoAgentsDir = `${process.cwd()}/.claude/agents`;
+  // CLAUDE_WORKING_DIR is set by the action to point to the repo being processed
+  const workingDir = process.env.CLAUDE_WORKING_DIR || process.cwd();
+  const repoAgentsDir = `${workingDir}/.claude/agents`;
   const targetAgentsDir = `${home}/.claude/agents`;
   
   try {
