@@ -79,4 +79,35 @@ export async function setupClaudeCodeSettings(
       console.log(`Slash commands directory not found or error copying: ${e}`);
     }
   }
+
+  // Copy subagent files from repository to Claude's agents directory
+  const repoAgentsDir = `${process.cwd()}/.claude/agents`;
+  const targetAgentsDir = `${home}/.claude/agents`;
+  
+  try {
+    const agentsDirExists = await $`test -d ${repoAgentsDir}`.quiet().nothrow();
+    if (agentsDirExists.exitCode === 0) {
+      console.log(`Found subagents directory at ${repoAgentsDir}`);
+      
+      // Create target agents directory if it doesn't exist
+      await $`mkdir -p ${targetAgentsDir}`.quiet();
+      console.log(`Created target agents directory at ${targetAgentsDir}`);
+      
+      // Copy all .md files from repo agents to Claude's agents directory
+      const copyResult = await $`cp -r ${repoAgentsDir}/*.md ${targetAgentsDir}/ 2>/dev/null`.quiet().nothrow();
+      
+      if (copyResult.exitCode === 0) {
+        // List copied agents for logging
+        const agents = await $`ls -la ${targetAgentsDir}/*.md 2>/dev/null | wc -l`.quiet().text();
+        const agentCount = parseInt(agents.trim()) || 0;
+        console.log(`Successfully copied ${agentCount} subagent(s) to ${targetAgentsDir}`);
+      } else {
+        console.log(`No subagent files found in ${repoAgentsDir}`);
+      }
+    } else {
+      console.log(`No subagents directory found at ${repoAgentsDir}`);
+    }
+  } catch (e) {
+    console.log(`Error handling subagents: ${e}`);
+  }
 }
