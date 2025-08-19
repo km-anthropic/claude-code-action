@@ -78,7 +78,7 @@ jobs:
             };
 
       - name: Fix CI failures with Claude
-        uses: km-anthropic/claude-code-action@v1-dev
+        uses: anthropics/claude-code-action@v1-dev
         with:
           prompt: |
             You are tasked with analyzing CI failure logs and fixing the issues. Follow these steps:

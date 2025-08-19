@@ -77,7 +77,7 @@ jobs:
             };
 
       - name: Fix CI failures with Claude
-        uses: km-anthropic/claude-code-action@v1-dev
+        uses: anthropics/claude-code-action@v1-dev
         with:
           prompt: |
             /fix-ci Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
