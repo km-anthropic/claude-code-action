@@ -163,7 +163,7 @@ jobs:
             const baseBranch = '${{ github.event.workflow_run.head_branch }}';
             const prUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${baseBranch}...${branchName}?quick_pull=1`;
             
-            const issueNumber = ${{ github.event.workflow_run.pull_requests[0]?.number || 'null' }};
+            const issueNumber = ${{ github.event.workflow_run.pull_requests[0] && github.event.workflow_run.pull_requests[0].number || 'null' }};
             
             if (issueNumber) {
               await github.rest.issues.createComment({
