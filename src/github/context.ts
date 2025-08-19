@@ -6,6 +6,7 @@ import type {
   PullRequestEvent,
   PullRequestReviewEvent,
   PullRequestReviewCommentEvent,
+  WorkflowRunEvent,
 } from "@octokit/webhooks-types";
 // Custom types for GitHub Actions events that aren't webhooks
 export type WorkflowDispatchEvent = {
@@ -89,7 +90,7 @@ export type ParsedGitHubContext = BaseContext & {
 // Context for automation events (workflow_dispatch, schedule, workflow_run)
 export type AutomationContext = BaseContext & {
   eventName: AutomationEventName;
-  payload: WorkflowDispatchEvent | ScheduleEvent | any;
+  payload: WorkflowDispatchEvent | ScheduleEvent | WorkflowRunEvent;
 };
 
 // Union type for all contexts
@@ -189,7 +190,7 @@ export function parseGitHubContext(): GitHubContext {
       return {
         ...commonFields,
         eventName: "workflow_run",
-        payload: context.payload as unknown as any,
+        payload: context.payload as unknown as WorkflowRunEvent,
       };
     }
     default:
