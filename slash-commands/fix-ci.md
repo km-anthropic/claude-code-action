@@ -1,6 +1,6 @@
 ---
 description: Analyze and fix CI failures by examining logs and making targeted fixes
-allowed_tools: "*"
+allowed_tools: Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git rm:*)
 ---
 
 # Fix CI Failures
@@ -42,11 +42,11 @@ Requirements:
 
 ## Step 4: Commit Changes
 
-After applying fixes:
-1. Use the `mcp__github_file_ops__commit_files` tool to commit your changes
-2. Include a descriptive commit message explaining what was fixed
-3. Document which CI jobs/tests were addressed in the commit message
-4. Important: Use the MCP file ops tool to commit your changes
+After applying ALL fixes:
+1. Stage all modified files with `git add -A`
+2. Commit with: `git commit -m "Fix CI failures: [describe specific fixes]"`
+3. Document which CI jobs/tests were addressed
+4. The branch already exists, so just commit your changes
 
 ## Step 5: Verify Fixes Locally
 

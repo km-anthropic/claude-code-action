@@ -77,10 +77,10 @@ jobs:
             };
 
       - name: Fix CI failures with Claude
-        uses: anthropics/claude-code-action@v1-dev
+        uses: km-anthropic/claude-code-action@main
         with:
           prompt: |
-            /fix-ci-commit Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
+            /fix-ci Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
             Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
             
             Error logs:
@@ -89,7 +89,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           timeout_minutes: "30"
           use_sticky_comment: "true"
-          use_commit_signing: "true"
           claude_args: "--max-turns 15"
 
       - name: Push fix branch
