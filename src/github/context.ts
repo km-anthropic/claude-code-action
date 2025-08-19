@@ -44,7 +44,7 @@ const ENTITY_EVENT_NAMES = [
   "pull_request_review_comment",
 ] as const;
 
-const AUTOMATION_EVENT_NAMES = ["workflow_dispatch", "schedule"] as const;
+const AUTOMATION_EVENT_NAMES = ["workflow_dispatch", "schedule", "workflow_run"] as const;
 
 // Derive types from constants for better maintainability
 type EntityEventName = (typeof ENTITY_EVENT_NAMES)[number];
@@ -86,10 +86,10 @@ export type ParsedGitHubContext = BaseContext & {
   isPR: boolean;
 };
 
-// Context for automation events (workflow_dispatch, schedule)
+// Context for automation events (workflow_dispatch, schedule, workflow_run)
 export type AutomationContext = BaseContext & {
   eventName: AutomationEventName;
-  payload: WorkflowDispatchEvent | ScheduleEvent;
+  payload: WorkflowDispatchEvent | ScheduleEvent | any;
 };
 
 // Union type for all contexts
@@ -183,6 +183,13 @@ export function parseGitHubContext(): GitHubContext {
         ...commonFields,
         eventName: "schedule",
         payload: context.payload as unknown as ScheduleEvent,
+      };
+    }
+    case "workflow_run": {
+      return {
+        ...commonFields,
+        eventName: "workflow_run",
+        payload: context.payload as unknown as any,
       };
     }
     default:
