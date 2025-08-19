@@ -18,3 +18,4 @@ console.log("Testing CI failure"
 const result: string = calculateTotal([1, 2, 3]); // Type error: number is not assignable to string
 
 export { calculateTotal };// Trigger CI again with fixed workflow
+// Final test with bun commands allowed
