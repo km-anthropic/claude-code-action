@@ -17,4 +17,4 @@ console.log("Testing CI failure"
 // Another type error
 const result: string = calculateTotal([1, 2, 3]); // Type error: number is not assignable to string
 
-export { calculateTotal };
+export { calculateTotal };// Trigger CI again with fixed workflow
