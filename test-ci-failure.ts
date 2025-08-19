@@ -1,5 +1,6 @@
 // This file has intentional errors to test auto-fix CI
 // Testing the simplified workflow with slash command
+// Now with workflow_run support added!
 
 function calculateTotal(items: number[]): number {
   // Type error: sum might be used before being assigned
