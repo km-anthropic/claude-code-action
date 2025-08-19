@@ -89,7 +89,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           timeout_minutes: "30"
           use_sticky_comment: "true"
-          claude_args: "--max-turns 15"
+          claude_args: '--max-turns 15 --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"'
 
       - name: Push fix branch
         if: success()
