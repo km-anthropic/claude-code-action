@@ -21,3 +21,4 @@ export { calculateTotal };// Trigger CI again with fixed workflow
 // Final test with bun commands allowed
 // Final test with everything in place
 // FINAL TEST - should work now!
+// This should work now!
