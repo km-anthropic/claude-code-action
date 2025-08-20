@@ -1,5 +1,6 @@
 // Test file for auto-fix CI workflow - Round 4
 // Testing with fixed workflow that checks out PR branch
+// Triggering new CI run with fixed workflow
 
 // Syntax error: missing semicolon and wrong bracket
 const items = [1, 2, 3}
