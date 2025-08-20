@@ -73,15 +73,18 @@ After applying ALL fixes:
 3. Document which CI jobs/tests were addressed
 4. **CRITICAL**: Push the branch with `git push origin HEAD` - You MUST push the branch after committing
 
-## Step 6: Create PR Comment
+## Step 6: Create PR Comment (REQUIRED - DO NOT SKIP)
 
-After successfully pushing the fixes, create a comment on the original PR to notify about the auto-fix:
+**CRITICAL: You MUST create a PR comment after pushing. This step is MANDATORY.**
 
-1. Extract the PR number from the context provided in arguments
-2. Use gh CLI to create a comment with the fix information
-3. Include a link to create a pull request from the fix branch
+After successfully pushing the fixes, you MUST create a comment on the original PR to notify about the auto-fix. DO NOT end the task without completing this step.
 
-Use this command (replace placeholders with actual values from context):
+1. Extract the PR number from the context provided in arguments (look for "PR Number:" in the context)
+2. **MANDATORY**: Execute the gh CLI command below to create the comment
+3. Verify the comment was created successfully
+
+**YOU MUST RUN THIS COMMAND** (replace placeholders with actual values from context):
+
 ```bash
 gh pr comment PR_NUMBER --body "## 🤖 CI Auto-Fix Available
 
@@ -92,12 +95,26 @@ Claude has analyzed the CI failures and prepared fixes.
 _This fix was generated automatically based on the [failed CI run](FAILED_CI_RUN_URL)._"
 ```
 
-Make sure to:
-- Replace PR_NUMBER with the actual PR number from the context
-- Replace OWNER/REPO with the repository from the context
-- Replace BASE_BRANCH with the original PR branch
-- Replace FIX_BRANCH with the branch name you're working on
-- Replace FAILED_CI_RUN_URL with the Failed CI Run URL from the context
+**IMPORTANT REPLACEMENTS YOU MUST MAKE:**
+
+- Replace `PR_NUMBER` with the actual PR number from "PR Number:" in context
+- Replace `OWNER/REPO` with the repository from "Repository:" in context
+- Replace `BASE_BRANCH` with the branch from "Base Branch:" in context
+- Replace `FIX_BRANCH` with the branch from "Branch Name:" in context
+- Replace `FAILED_CI_RUN_URL` with the URL from "Failed CI Run:" in context
+
+**DO NOT SKIP THIS STEP. The task is NOT complete until the PR comment is created.**
+
+## Step 7: Final Verification
+
+**BEFORE CONSIDERING THE TASK COMPLETE**, verify you have:
+
+1. ✅ Fixed all CI failures
+2. ✅ Committed the changes
+3. ✅ Pushed the branch with `git push origin HEAD`
+4. ✅ **CREATED THE PR COMMENT using `gh pr comment` command from Step 6**
+
+If you have NOT created the PR comment, go back to Step 6 and execute the command.
 
 ## Important Guidelines
 
@@ -105,5 +122,6 @@ Make sure to:
 - Maintain code quality and follow the project's established patterns
 - If a fix requires significant refactoring, document why it's necessary
 - When multiple solutions exist, choose the simplest one that maintains code quality
+- **THE TASK IS NOT COMPLETE WITHOUT THE PR COMMENT**
 
 Begin by analyzing the failure details provided above.
