@@ -28,7 +28,7 @@ jobs:
           
       - name: Fetch and checkout PR branch
         run: |
-          git fetch origin ${{ github.event.workflow_run.head_branch }}
+          git fetch origin ${{ github.event.workflow_run.head_branch }}:${{ github.event.workflow_run.head_branch }}
           git checkout ${{ github.event.workflow_run.head_branch }}
 
       - name: Setup git
@@ -150,8 +150,6 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           timeout_minutes: "30"
-          use_sticky_comment: "true"
-          use_commit_signing: "true"
           claude_args: "--max-turns 15 --allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(sed:*),Bash(echo:*),Bash(cat:*)'"
 
       - name: Push fix branch
