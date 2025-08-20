@@ -82,7 +82,7 @@ jobs:
             Branch Name: ${{ steps.branch.outputs.branch_name }}
             Base Branch: ${{ github.event.workflow_run.head_branch }}
             Repository: ${{ github.repository }}
-            
+
             Error logs:
             ${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
