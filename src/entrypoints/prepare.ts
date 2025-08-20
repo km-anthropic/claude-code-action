@@ -84,6 +84,9 @@ async function run() {
 
     // Set the MCP config output
     core.setOutput("mcp_config", result.mcpConfig);
+    
+    // Expose the GitHub token (Claude App token) as an output
+    core.setOutput("github_token", githubToken);
 
     // Step 6: Get system prompt from mode if available
     if (mode.getSystemPrompt) {

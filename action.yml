@@ -126,6 +126,9 @@ outputs:
   branch_name:
     description: "The branch created by Claude Code for this execution"
     value: ${{ steps.prepare.outputs.CLAUDE_BRANCH }}
+  github_token:
+    description: "The GitHub token used by the action (Claude App token if available)"
+    value: ${{ steps.prepare.outputs.github_token }}
 
 runs:
   using: "composite"

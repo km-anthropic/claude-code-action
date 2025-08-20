@@ -73,6 +73,7 @@ jobs:
             };
 
       - name: Fix CI failures with Claude
+        id: claude
         uses: anthropics/claude-code-action@v1-dev
         with:
           prompt: |
@@ -91,39 +92,11 @@ jobs:
           timeout_minutes: "30"
           claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*)'"
 
-      - name: Get Claude GitHub App Token
-        id: claude_token
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Get OIDC token
-            const oidcToken = await core.getIDToken('claude-code-github-action');
-
-            // Exchange for Claude GitHub App token
-            const response = await fetch('https://api.anthropic.com/api/github/github-app-token-exchange', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${oidcToken}`
-              }
-            });
-
-            if (!response.ok) {
-              const error = await response.text();
-              console.log('Failed to get Claude token, will use default GitHub token');
-              console.log('Error:', error);
-              return ''; // Return empty to fallback to GITHUB_TOKEN
-            }
-
-            const data = await response.json();
-            return data.token;
-          result-encoding: string
-
       - name: Create pull request comment
         if: success()
         uses: actions/github-script@v7
         with:
-          github-token: ${{ steps.claude_token.outputs.result || secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.claude.outputs.github_token || secrets.GITHUB_TOKEN }}
           script: |
             const branchName = '${{ steps.branch.outputs.branch_name }}';
             const baseBranch = '${{ github.event.workflow_run.head_branch }}';
