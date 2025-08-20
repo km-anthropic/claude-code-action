@@ -3,6 +3,7 @@
 import { readFileSync, existsSync } from "fs";
 import { exit } from "process";
 
+console.log("hello_world);
 export type ToolUse = {
   type: string;
   name?: string;
