@@ -26,6 +26,11 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Fetch and checkout PR branch
+        run: |
+          git fetch origin ${{ github.event.workflow_run.head_branch }}:${{ github.event.workflow_run.head_branch }}
+          git checkout ${{ github.event.workflow_run.head_branch }}
 
       - name: Setup git
         run: |
