@@ -17,7 +17,8 @@ jobs:
   auto-fix:
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
-      github.event.workflow_run.pull_requests[0]
+      github.event.workflow_run.pull_requests[0] &&
+      !startsWith(github.event.workflow_run.head_branch, 'claude-auto-fix-ci-')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
