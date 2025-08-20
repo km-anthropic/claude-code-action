@@ -51,8 +51,8 @@ After applying ALL fixes:
 1. Stage all modified files with `git add -A`
 2. Commit with: `git commit -m "Fix CI failures: [describe specific fixes]"`
 3. Document which CI jobs/tests were addressed
-4. Push the branch: `git push origin HEAD`
-5. If there's a PR number in the arguments, post a comment about the fixes
+4. **CRITICAL**: Push the branch with `git push origin HEAD` - You MUST push the branch after committing
+5. If there's a PR number in the arguments, post a comment about the fixes AFTER pushing
 
 ## Step 5: Verify Fixes Locally
 
