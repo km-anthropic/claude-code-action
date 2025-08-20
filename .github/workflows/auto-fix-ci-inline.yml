@@ -48,15 +48,15 @@ jobs:
               repo: context.repo.repo,
               run_id: ${{ github.event.workflow_run.id }}
             });
-            
+
             const jobs = await github.rest.actions.listJobsForWorkflowRun({
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: ${{ github.event.workflow_run.id }}
             });
-            
+
             const failedJobs = jobs.data.jobs.filter(job => job.conclusion === 'failure');
-            
+
             let errorLogs = [];
             for (const job of failedJobs) {
               const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
@@ -69,7 +69,7 @@ jobs:
                 logs: logs.data
               });
             }
-            
+
             return {
               runUrl: run.data.html_url,
               failedJobs: failedJobs.map(j => j.name),
@@ -82,7 +82,7 @@ jobs:
           prompt: |
             /fix-ci Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
             Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
-            
+
             Error logs:
             ${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -102,9 +102,9 @@ jobs:
             const branchName = '${{ steps.branch.outputs.branch_name }}';
             const baseBranch = '${{ github.event.workflow_run.head_branch }}';
             const prUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${baseBranch}...${branchName}?quick_pull=1`;
-            
+
             const issueNumber = ${{ github.event.workflow_run.pull_requests[0].number }}
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
