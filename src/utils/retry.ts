@@ -4,7 +4,7 @@ export type RetryOptions = {
   maxDelayMs?: number;
   backoffFactor?: number;
 };
-console.log("asdf);
+
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   options: RetryOptions = {},
