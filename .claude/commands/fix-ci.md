@@ -64,25 +64,6 @@ After applying ALL fixes:
 3. Document which CI jobs/tests were addressed
 4. **CRITICAL**: Push the branch with `git push origin HEAD` - You MUST push the branch after committing
 
-## Step 5: Post PR Comment
-
-If you fixed issues and pushed the branch:
-
-1. Extract the PR number, branch name, base branch, and CI run URL from the arguments
-2. Post a comment on the PR using:
-
-   ```bash
-   gh pr comment [PR_NUMBER] --body "## 🤖 CI Auto-Fix Available
-
-   Claude has analyzed the CI failures and prepared fixes.
-
-   [**→ Create pull request to fix CI**](https://github.com/[REPO]/compare/[BASE_BRANCH]...[FIX_BRANCH]?quick_pull=1)
-
-   _This fix was generated automatically based on the [failed CI run]([CI_RUN_URL])._"
-   ```
-
-3. Replace the placeholders with actual values from the arguments
-
 ## Step 5: Verify Fixes Locally
 
 Run available verification commands:
