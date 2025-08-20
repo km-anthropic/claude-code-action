@@ -23,6 +23,7 @@ If you prefer not to install the official Claude app, you can create your own Gi
 **Steps to create and use a custom GitHub App:**
 
 1. **Create a new GitHub App:**
+
    - Go to https://github.com/settings/apps (for personal apps) or your organization's settings
    - Click "New GitHub App"
    - Configure the app with these minimum permissions:
@@ -35,16 +36,19 @@ If you prefer not to install the official Claude app, you can create your own Gi
    - Create the app
 
 2. **Generate and download a private key:**
+
    - After creating the app, scroll down to "Private keys"
    - Click "Generate a private key"
    - Download the `.pem` file (keep this secure!)
 
 3. **Install the app on your repository:**
+
    - Go to the app's settings page
    - Click "Install App"
    - Select the repositories where you want to use Claude
 
 4. **Add the app credentials to your repository secrets:**
+
    - Go to your repository's Settings → Secrets and variables → Actions
    - Add these secrets:
      - `APP_ID`: Your GitHub App's ID (found in the app settings)
@@ -93,6 +97,7 @@ For more information on creating GitHub Apps, see the [GitHub documentation](htt
 To securely use your Anthropic API key:
 
 1. Add your API key as a repository secret:
+
    - Go to your repository's Settings
    - Navigate to "Secrets and variables" → "Actions"
    - Click "New repository secret"
