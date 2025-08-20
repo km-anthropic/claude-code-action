@@ -55,7 +55,16 @@ Requirements:
 - Ensure changes are production-ready, not temporary hacks
 - Preserve existing functionality while fixing issues
 
-## Step 4: Commit and Push Changes
+## Step 4: Verify Fixes Locally
+
+Run available verification commands:
+
+- Execute the failing tests locally to confirm they pass
+- Run the project's lint command (check package.json for scripts)
+- Run type checking if available
+- Execute any build commands to ensure compilation succeeds
+
+## Step 5: Commit and Push Changes
 
 After applying ALL fixes:
 
@@ -64,14 +73,31 @@ After applying ALL fixes:
 3. Document which CI jobs/tests were addressed
 4. **CRITICAL**: Push the branch with `git push origin HEAD` - You MUST push the branch after committing
 
-## Step 5: Verify Fixes Locally
+## Step 6: Create PR Comment
 
-Run available verification commands:
+After successfully pushing the fixes, create a comment on the original PR to notify about the auto-fix:
 
-- Execute the failing tests locally to confirm they pass
-- Run the project's lint command (check package.json for scripts)
-- Run type checking if available
-- Execute any build commands to ensure compilation succeeds
+1. Extract the PR number from the context provided in arguments
+2. Use gh CLI to create a comment with the fix information
+3. Include a link to create a pull request from the fix branch
+
+Use this command (replace placeholders with actual values from context):
+```bash
+gh pr comment PR_NUMBER --body "## 🤖 CI Auto-Fix Available
+
+Claude has analyzed the CI failures and prepared fixes.
+
+[**→ Create pull request to fix CI**](https://github.com/OWNER/REPO/compare/BASE_BRANCH...FIX_BRANCH?quick_pull=1)
+
+_This fix was generated automatically based on the [failed CI run](FAILED_CI_RUN_URL)._"
+```
+
+Make sure to:
+- Replace PR_NUMBER with the actual PR number from the context
+- Replace OWNER/REPO with the repository from the context
+- Replace BASE_BRANCH with the original PR branch
+- Replace FIX_BRANCH with the branch name you're working on
+- Replace FAILED_CI_RUN_URL with the Failed CI Run URL from the context
 
 ## Important Guidelines
 
