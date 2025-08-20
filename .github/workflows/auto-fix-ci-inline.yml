@@ -148,7 +148,7 @@ jobs:
           timeout_minutes: "30"
           use_sticky_comment: "true"
           use_commit_signing: "true"
-          claude_args: "--max-turns 15"
+          claude_args: "--max-turns 15 --allowed-tools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(sed:*),Bash(echo:*),Bash(cat:*)'"
 
       - name: Push fix branch
         if: success()
