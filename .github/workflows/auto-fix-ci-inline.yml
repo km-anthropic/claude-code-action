@@ -1,0 +1,113 @@
+name: Auto Fix CI Failures
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  issues: write
+
+jobs:
+  auto-fix:
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.pull_requests[0]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup git
+        run: |
+          git config --global user.name "claude[bot]"
+          git config --global user.email "198276+claude[bot]@users.noreply.github.com"
+
+      - name: Create fix branch
+        id: branch
+        run: |
+          BRANCH_NAME="claude-auto-fix-ci-${{ github.event.workflow_run.head_branch }}-${{ github.run_id }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Get CI failure details
+        id: failure_details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = await github.rest.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }}
+            });
+            
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }}
+            });
+            
+            const failedJobs = jobs.data.jobs.filter(job => job.conclusion === 'failure');
+            
+            let errorLogs = [];
+            for (const job of failedJobs) {
+              const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                job_id: job.id
+              });
+              errorLogs.push({
+                jobName: job.name,
+                logs: logs.data
+              });
+            }
+            
+            return {
+              runUrl: run.data.html_url,
+              failedJobs: failedJobs.map(j => j.name),
+              errorLogs: errorLogs
+            };
+
+      - name: Fix CI failures with Claude
+        uses: anthropics/claude-code-action@v1-dev
+        with:
+          prompt: |
+            /fix-ci Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
+            Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
+            
+            Error logs:
+            ${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          timeout_minutes: "30"
+
+      - name: Push fix branch
+        if: success()
+        run: |
+          git push origin ${{ steps.branch.outputs.branch_name }}
+
+      - name: Create pull request comment
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = '${{ steps.branch.outputs.branch_name }}';
+            const baseBranch = '${{ github.event.workflow_run.head_branch }}';
+            const prUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${baseBranch}...${branchName}?quick_pull=1`;
+            
+            const issueNumber = ${{ github.event.workflow_run.pull_requests[0].number }}
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `## 🤖 CI Auto-Fix Available\n\nClaude has analyzed the CI failures and prepared fixes.\n\n[**→ Create pull request to fix CI**](${prUrl})\n\n_This fix was generated automatically based on the [failed CI run](${{ fromJSON(steps.failure_details.outputs.result).runUrl }})._`
+            });
