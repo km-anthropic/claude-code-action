@@ -44,14 +44,15 @@ Requirements:
 - Ensure changes are production-ready, not temporary hacks
 - Preserve existing functionality while fixing issues
 
-## Step 4: Commit Changes
+## Step 4: Commit and Push Changes
 
 After applying ALL fixes:
 
 1. Stage all modified files with `git add -A`
 2. Commit with: `git commit -m "Fix CI failures: [describe specific fixes]"`
 3. Document which CI jobs/tests were addressed
-4. The branch already exists, so just commit your changes
+4. Push the branch: `git push origin HEAD`
+5. If there's a PR number in the arguments, post a comment about the fixes
 
 ## Step 5: Verify Fixes Locally
 

@@ -82,34 +82,22 @@ jobs:
           prompt: |
             /fix-ci Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
             Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
+            PR Number: ${{ github.event.workflow_run.pull_requests[0].number }}
+            Branch Name: ${{ steps.branch.outputs.branch_name }}
+            Base Branch: ${{ github.event.workflow_run.head_branch }}
 
             Error logs:
             ${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}
+            
+            After fixing and pushing, post a comment on the PR using:
+            gh pr comment ${{ github.event.workflow_run.pull_requests[0].number }} --body "## 🤖 CI Auto-Fix Available
+            
+            Claude has analyzed the CI failures and prepared fixes.
+            
+            [**→ Create pull request to fix CI**](https://github.com/${{ github.repository }}/compare/${{ github.event.workflow_run.head_branch }}...${{ steps.branch.outputs.branch_name }}?quick_pull=1)
+            
+            _This fix was generated automatically based on the [failed CI run](${{ fromJSON(steps.failure_details.outputs.result).runUrl }})._"
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           timeout_minutes: "30"
-          claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*)'"
-
-
-      - name: Push fix branch
-        if: success()
-        run: |
-          git push origin ${{ steps.branch.outputs.branch_name }}
-
-      - name: Create pull request comment
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const branchName = '${{ steps.branch.outputs.branch_name }}';
-            const baseBranch = '${{ github.event.workflow_run.head_branch }}';
-            const prUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${baseBranch}...${branchName}?quick_pull=1`;
-
-            const issueNumber = ${{ github.event.workflow_run.pull_requests[0].number }}
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              body: `## 🤖 CI Auto-Fix Available\n\nClaude has analyzed the CI failures and prepared fixes.\n\n[**→ Create pull request to fix CI**](${prUrl})\n\n_This fix was generated automatically based on the [failed CI run](${{ fromJSON(steps.failure_details.outputs.result).runUrl }})._`
-            });
+          claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*)'"
