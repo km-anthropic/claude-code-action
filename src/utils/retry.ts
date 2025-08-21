@@ -4,6 +4,7 @@ export type RetryOptions = {
   maxDelayMs?: number;
   backoffFactor?: number;
 };
+console.log("test signed autofix);
 
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
