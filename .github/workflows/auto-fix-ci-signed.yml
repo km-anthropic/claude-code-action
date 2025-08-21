@@ -91,3 +91,4 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           timeout_minutes: "30"
           use_commit_signing: true
+          claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),mcp_github_file_ops_server__create_branch,mcp_github_file_ops_server__push_files,mcp_github_file_ops_server__search_files,mcp_github_file_ops_server__read_file,mcp_github_file_ops_server__read_multiple_files,mcp_github_file_ops_server__file_search'"
