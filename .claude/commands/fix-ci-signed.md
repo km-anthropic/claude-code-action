@@ -82,6 +82,7 @@ Run available verification commands using Bash:
    - The tool will automatically create signed commits and push to the branch
 
 Example usage:
+
 ```
 mcp__github_file_ops__commit_files with:
 - files: ["src/utils/retry.ts", "src/other/file.ts"]  // List of file paths you edited
