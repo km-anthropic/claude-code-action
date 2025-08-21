@@ -104,12 +104,16 @@ export const agentMode: Mode = {
 
     core.setOutput("mcp_config", JSON.stringify(mcpConfig));
 
+    // Check for branch info from environment variables (useful for auto-fix workflows)
+    const claudeBranch = process.env.CLAUDE_BRANCH || undefined;
+    const baseBranch = process.env.BASE_BRANCH || "";
+
     return {
       commentId: undefined,
       branchInfo: {
-        baseBranch: "",
-        currentBranch: "",
-        claudeBranch: undefined,
+        baseBranch: baseBranch,
+        currentBranch: baseBranch, // Use base branch as current when creating new branch
+        claudeBranch: claudeBranch,
       },
       mcpConfig: JSON.stringify(mcpConfig),
     };

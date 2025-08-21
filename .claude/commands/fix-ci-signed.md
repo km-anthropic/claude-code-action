@@ -76,10 +76,12 @@ Run available verification commands using Bash:
 **CRITICAL**: You MUST use MCP tools for committing and pushing:
 
 1. Prepare all your file changes (using Edit/MultiEdit/Write tools as needed)
-2. **Use `mcp__github_file_ops__commit_files` to commit and push all changes at once**
+2. **Use `mcp__github_file_ops__commit_files` to commit and push all changes**
    - Pass the file paths you've edited in the `files` array
    - Set `message` to describe the specific fixes (e.g., "Fix CI failures: remove syntax errors and format code")
-   - The tool will automatically create signed commits and push to the branch
+   - The MCP tool will automatically create the branch specified in "Branch Name:" from the context and push signed commits
+
+**IMPORTANT**: The MCP tool will create the branch from the context automatically. The branch name from "Branch Name:" in the context will be used.
 
 Example usage:
 ```
@@ -87,6 +89,8 @@ mcp__github_file_ops__commit_files with:
 - files: ["src/utils/retry.ts", "src/other/file.ts"]  // List of file paths you edited
 - message: "Fix CI failures: [describe specific fixes]"
 ```
+
+Note: The branch will be created from the Base Branch specified in the context.
 
 ## Step 6: Create PR Comment (REQUIRED - DO NOT SKIP)
 

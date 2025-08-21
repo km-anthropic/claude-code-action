@@ -28,12 +28,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create fix branch
+      - name: Generate fix branch name
         id: branch
         run: |
           BRANCH_NAME="claude-auto-fix-ci-signed-${{ github.event.workflow_run.head_branch }}-${{ github.run_id }}"
-          git checkout -b "$BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          # Don't create branch locally - MCP tools will create it via API
+          echo "Generated branch name: $BRANCH_NAME (will be created by MCP tools)"
 
       - name: Get CI failure details
         id: failure_details
@@ -76,6 +77,9 @@ jobs:
       - name: Fix CI failures with Claude (Signed Commits)
         id: claude
         uses: anthropics/claude-code-action@v1-dev
+        env:
+          CLAUDE_BRANCH: ${{ steps.branch.outputs.branch_name }}
+          BASE_BRANCH: ${{ github.event.workflow_run.head_branch }}
         with:
           prompt: |
             /fix-ci-signed 
