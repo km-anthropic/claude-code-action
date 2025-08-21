@@ -84,6 +84,7 @@ Run available verification commands using Bash:
 **IMPORTANT**: The MCP tool will create the branch from the context automatically. The branch name from "Branch Name:" in the context will be used.
 
 Example usage:
+
 ```
 mcp__github_file_ops__commit_files with:
 - files: ["src/utils/retry.ts", "src/other/file.ts"]  // List of file paths you edited
