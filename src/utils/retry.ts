@@ -9,6 +9,7 @@ export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   options: RetryOptions = {},
 ): Promise<T> {
+  console.log("test v3 - testing signed fix);
   const {
     maxAttempts = 3,
     initialDelayMs = 5000,
