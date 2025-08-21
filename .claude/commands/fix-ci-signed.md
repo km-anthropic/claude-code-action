@@ -1,6 +1,6 @@
 ---
 description: Analyze and fix CI failures with signed commits using MCP tools
-allowed_tools: Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),mcp_github_file_ops_server__create_branch,mcp_github_file_ops_server__push_files,mcp_github_file_ops_server__search_files,mcp_github_file_ops_server__read_file,mcp_github_file_ops_server__read_multiple_files,mcp_github_file_ops_server__file_search
+allowed_tools: Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),mcp_github_file_ops_server__commit_files,mcp_github_file_ops_server__delete_files
 ---
 
 # Fix CI Failures with Signed Commits
@@ -26,10 +26,8 @@ Look for these key pieces of information in the arguments:
 
 **IMPORTANT**: You MUST use MCP tools for all git operations to ensure commits are properly signed. DO NOT use `git` commands directly via Bash.
 
-- Use `mcp_github_file_ops_server__create_branch` to create branches
-- Use `mcp_github_file_ops_server__push_files` to commit and push changes
-- Use `mcp_github_file_ops_server__read_file` or `mcp_github_file_ops_server__read_multiple_files` for reading files
-- Use `mcp_github_file_ops_server__search_files` or `mcp_github_file_ops_server__file_search` for searching
+- Use `mcp_github_file_ops_server__commit_files` to commit and push changes
+- Use `mcp_github_file_ops_server__delete_files` to delete files
 
 ## Step 1: Analyze the Failure
 
@@ -78,18 +76,16 @@ Run available verification commands using Bash:
 **CRITICAL**: You MUST use MCP tools for committing and pushing:
 
 1. Prepare all your file changes (using Edit/MultiEdit/Write tools as needed)
-2. **Use `mcp_github_file_ops_server__push_files` to commit and push all changes at once**
-   - Set `commitMessage` to describe the specific fixes (e.g., "Fix CI failures: remove syntax errors and format code")
-   - Include all modified files in the `files` array
+2. **Use `mcp_github_file_ops_server__commit_files` to commit and push all changes at once**
+   - Pass the file paths you've edited in the `files` array
+   - Set `message` to describe the specific fixes (e.g., "Fix CI failures: remove syntax errors and format code")
    - The tool will automatically create signed commits and push to the branch
 
-Example structure for push_files:
-
+Example usage:
 ```
-mcp_github_file_ops_server__push_files with:
-- files: [array of all modified files with their paths and contents]
-- commitMessage: "Fix CI failures: [describe specific fixes]"
-- branch: [use the Branch Name from context]
+mcp_github_file_ops_server__commit_files with:
+- files: ["src/utils/retry.ts", "src/other/file.ts"]  // List of file paths you edited
+- message: "Fix CI failures: [describe specific fixes]"
 ```
 
 ## Step 6: Create PR Comment (REQUIRED - DO NOT SKIP)
