@@ -29,6 +29,13 @@ Look for these key pieces of information in the arguments:
 - Use `mcp__github_file_ops__commit_files` to commit and push changes
 - Use `mcp__github_file_ops__delete_files` to delete files
 
+**⚠️ CRITICAL UNDERSTANDING**: The MCP commit tool (`mcp__github_file_ops__commit_files`) works by:
+1. Reading files from YOUR LOCAL DISK at the paths you specify
+2. Creating a commit with those file contents
+3. Pushing to GitHub with signed commits
+
+**This means you MUST edit files locally FIRST using Edit/MultiEdit/Write tools before committing!**
+
 ## Step 1: Analyze the Failure
 
 Parse the provided CI failure information to understand:
@@ -47,6 +54,8 @@ Use MCP search tools to locate the failing code:
 
 ## Step 3: Apply Targeted Fixes
 
+**CRITICAL: You MUST edit files locally using Edit/MultiEdit/Write tools BEFORE committing!**
+
 Make minimal, focused changes:
 
 - **For test failures**: Determine if the test or implementation needs fixing
@@ -54,6 +63,13 @@ Make minimal, focused changes:
 - **For linting issues**: Apply formatting using the project's tools
 - **For build errors**: Resolve dependency or configuration issues
 - **For missing imports**: Add the necessary imports or install packages
+- **For syntax errors**: Use Edit tool to remove or fix the problematic lines
+
+**WORKFLOW REQUIREMENT**: 
+1. First READ the file to see the current content
+2. Then EDIT/WRITE the file to fix the issue
+3. Verify the file was edited successfully (the tool will show the updated content)
+4. Only THEN proceed to commit the files
 
 Requirements:
 
@@ -73,22 +89,41 @@ Run available verification commands using Bash:
 
 ## Step 5: Commit and Push Changes Using MCP
 
-**CRITICAL**: You MUST use MCP tools for committing and pushing:
+**CRITICAL WORKFLOW - READ THIS CAREFULLY**:
 
-1. Prepare all your file changes (using Edit/MultiEdit/Write tools as needed)
-2. **Use `mcp__github_file_ops__commit_files` to commit and push all changes**
-   - Pass the file paths you've edited in the `files` array
-   - Set `message` to describe the specific fixes (e.g., "Fix CI failures: remove syntax errors and format code")
-   - The MCP tool will automatically create the branch specified in "Branch Name:" from the context and push signed commits
+The MCP commit tool reads files from your local disk. You MUST follow this exact sequence:
 
-**IMPORTANT**: The MCP tool will create the branch from the context automatically. The branch name from "Branch Name:" in the context will be used.
+### Step 5.1: Verify Your Local Edits
+Before committing, ensure you have:
+- ✅ Used Read tool to view the original file content
+- ✅ Used Edit/MultiEdit/Write tools to fix the issues
+- ✅ Confirmed the tool showed "file has been updated" or similar success message
+- ✅ The edited files exist on disk at the exact paths you'll pass to commit_files
 
-Example usage:
+### Step 5.2: Commit Your Changes
+**Use `mcp__github_file_ops__commit_files` to commit and push all changes:**
 
 ```
 mcp__github_file_ops__commit_files with:
-- files: ["src/utils/retry.ts", "src/other/file.ts"]  // List of file paths you edited
+- files: ["src/utils/retry.ts", "src/other/file.ts"]  // EXACT paths of files you edited locally
 - message: "Fix CI failures: [describe specific fixes]"
+```
+
+**HOW IT WORKS**:
+1. The MCP tool reads the content from YOUR LOCAL FILES at the paths specified
+2. It creates a commit with those file contents
+3. It pushes to the branch specified in "Branch Name:" from context
+
+**COMMON MISTAKE TO AVOID**:
+❌ DO NOT try to commit files you haven't edited locally first
+❌ DO NOT skip the Edit/Write step thinking the MCP tool will make changes
+✅ ALWAYS edit files locally first, THEN commit them
+
+**Example of CORRECT workflow**:
+```
+1. Read("src/config.ts")  // See the problem
+2. Edit("src/config.ts", old_string="console.log(\"broken);" new_string="")  // Fix it locally
+3. mcp__github_file_ops__commit_files(files=["src/config.ts"], message="Fix syntax error")  // Commit the local fix
 ```
 
 Note: The branch will be created from the Base Branch specified in the context.
