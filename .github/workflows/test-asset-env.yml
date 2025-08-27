@@ -1,0 +1,71 @@
+name: Test Asset Environment Variable Bug
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+jobs:
+  test-env-bug:
+    if: contains(github.event.comment.body, 'test-asset-env') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pr-492  # Test the PR branch
+      
+      - name: Create test issue comment
+        id: create-test-comment
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Create a test image file first
+            const fs = require('fs');
+            fs.writeFileSync('/tmp/test-image.png', 'fake image content');
+            
+            // For workflow_dispatch, we'll simulate by just setting the env var
+            // In real scenario, this would be an issue with image attachments
+            core.exportVariable('TEST_SCENARIO', 'workflow_dispatch');
+            return { number: 1 };
+          result-encoding: json
+
+      - name: Step 1 - Download assets (simulate PR behavior)
+        uses: ./  # Use local action
+        id: download-assets
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || 'test-key' }}
+          download_github_assets: true
+          prompt: "Test download step"
+        continue-on-error: true
+
+      - name: Step 2 - Check if CLAUDE_ASSET_FILES persists
+        run: |
+          echo "=== Checking CLAUDE_ASSET_FILES availability ==="
+          echo "CLAUDE_ASSET_FILES value: '$CLAUDE_ASSET_FILES'"
+          
+          if [ -z "$CLAUDE_ASSET_FILES" ]; then
+            echo "❌ BUG CONFIRMED: CLAUDE_ASSET_FILES is empty!"
+            echo "The environment variable set by process.env doesn't persist between steps"
+            exit 1
+          else
+            echo "✅ CLAUDE_ASSET_FILES is available: $CLAUDE_ASSET_FILES"
+            echo "No bug - the implementation works correctly"
+          fi
+
+      - name: Step 3 - Test the example workflow pattern
+        run: |
+          # This simulates what the example workflow tries to do
+          if [ -n "$CLAUDE_ASSET_FILES" ]; then
+            echo "ASSET_FILE_LIST<<EOF" >> $GITHUB_ENV
+            echo "$CLAUDE_ASSET_FILES" | tr ',' '\n' | while IFS= read -r file; do
+              [ -n "$file" ] && echo "- $file"
+            done >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          else
+            echo "Cannot process assets - CLAUDE_ASSET_FILES is empty"
+          fi
+
+      - name: Step 4 - Verify processed list
+        run: |
+          echo "Processed asset list:"
+          echo "$ASSET_FILE_LIST"
