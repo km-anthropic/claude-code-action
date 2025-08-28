@@ -72,6 +72,9 @@ async function run() {
     // Expose the GitHub token (Claude App token) as an output
     core.setOutput("github_token", githubToken);
 
+    // Expose the GitHub token (Claude App token) as an output
+    core.setOutput("github_token", githubToken);
+
     // Step 6: Get system prompt from mode if available
     if (mode.getSystemPrompt) {
       const modeContext = mode.prepareContext(context, {

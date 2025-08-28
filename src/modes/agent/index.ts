@@ -124,6 +124,10 @@ export const agentMode: Mode = {
 
     core.setOutput("claude_args", claudeArgs);
 
+    // Check for branch info from environment variables (useful for auto-fix workflows)
+    const claudeBranch = process.env.CLAUDE_BRANCH || undefined;
+    const baseBranch = process.env.BASE_BRANCH || "";
+
     return {
       commentId: undefined,
       branchInfo: {
