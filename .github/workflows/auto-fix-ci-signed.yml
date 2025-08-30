@@ -1,0 +1,256 @@
+name: Auto Fix CI Failures (Signed Commits)
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  checks: read  # Required to read check runs and annotations
+  issues: write
+  id-token: write # Required for OIDC token exchange
+
+jobs:
+  auto-fix-signed:
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.pull_requests[0] &&
+      !startsWith(github.event.workflow_run.head_branch, 'claude-auto-fix-ci-signed-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate fix branch name
+        id: branch
+        run: |
+          BRANCH_NAME="claude-auto-fix-ci-signed-${{ github.event.workflow_run.head_branch }}-${{ github.run_id }}"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Generated branch name: $BRANCH_NAME"
+
+      - name: Get CI failure details
+        id: failure_details
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const run = await github.rest.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }}
+            });
+
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }}
+            });
+
+            const failedJobs = jobs.data.jobs.filter(job => job.conclusion === 'failure');
+
+            // Get annotations (error messages) instead of full logs
+            let errorLogs = [];
+            
+            // Get all check runs once for this commit
+            const checkRuns = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: run.data.head_sha
+            });
+            
+            for (const job of failedJobs) {
+              // Find the check run for this job
+              const checkRun = checkRuns.data.check_runs.find(
+                check => check.name === job.name
+              );
+              
+              if (checkRun) {
+                // Get annotations (actual error messages)
+                const annotations = await github.rest.checks.listAnnotations({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  check_run_id: checkRun.id
+                });
+                
+                errorLogs.push({
+                  jobName: job.name,
+                  errors: annotations.data.slice(0, 10).map(a => ({
+                    message: a.message,
+                    file: a.path,
+                    line: a.start_line
+                  }))
+                });
+              }
+            }
+
+            return {
+              runUrl: run.data.html_url,
+              failedJobs: failedJobs.map(j => j.name),
+              errorLogs: errorLogs
+            };
+
+      - name: Fix CI failures with Claude (Signed Commits)
+        id: claude
+        uses: anthropics/claude-code-action@main
+        env:
+          CLAUDE_BRANCH: ${{ steps.branch.outputs.branch_name }}
+        with:
+          base_branch: ${{ github.event.workflow_run.head_branch }}  # Critical: tell action to branch from PR's branch
+          prompt: |
+            /fix-ci-signed 
+            Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
+            Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
+            PR Number: ${{ github.event.workflow_run.pull_requests[0].number }}
+            Branch Name: ${{ steps.branch.outputs.branch_name }}
+            Base Branch: ${{ github.event.workflow_run.head_branch }}
+            Repository: ${{ github.repository }}
+
+            Error annotations:
+            ${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          timeout_minutes: "30"
+          use_commit_signing: true
+          claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files'"
+
+      - name: Analyze CI Fixes
+        id: analyze_fixes
+        if: steps.claude.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          echo "Analyzing fixes made by Claude..."
+          
+          # Get the original PR branch
+          ORIGINAL_BRANCH="${{ github.event.workflow_run.head_branch }}"
+          FIX_BRANCH="${{ steps.branch.outputs.branch_name }}"
+          
+          # Fetch the original branch
+          git fetch origin "$ORIGINAL_BRANCH" --depth=1 || true
+          
+          # Get list of modified files
+          MODIFIED_FILES=$(git diff --name-only "origin/$ORIGINAL_BRANCH" 2>/dev/null || git diff --name-only HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$MODIFIED_FILES" ]; then
+            echo "No files modified"
+            echo "fixes_summary=No files were modified" >> $GITHUB_OUTPUT
+            echo "files_count=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Get the current commit SHA for permalinks
+          COMMIT_SHA=$(git rev-parse HEAD)
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          
+          # Count modified files
+          FILES_COUNT=$(echo "$MODIFIED_FILES" | wc -l | tr -d ' ')
+          echo "files_count=$FILES_COUNT" >> $GITHUB_OUTPUT
+          
+          # Parse error annotations from the original failure to match with fixes
+          ERROR_LOGS='${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}'
+          
+          # Build fix summaries by analyzing the diff and matching with error logs
+          FIXES_SUMMARY=""
+          SEPARATOR=""
+          
+          # Process each modified file
+          while IFS= read -r FILE; do
+            if [ -z "$FILE" ]; then continue; fi
+            
+            # Get the first modified line number in this file
+            LINE_NUM=$(git diff "origin/$ORIGINAL_BRANCH" -- "$FILE" 2>/dev/null | grep -m1 '^@@' | sed -E 's/@@ -[0-9]+,[0-9]+ \+([0-9]+).*/\1/' || echo "1")
+            
+            # Determine fix type based on file extension and error logs
+            FIX_TYPE="Fix"
+            if echo "$FILE" | grep -qE '\.(test|spec)\.[tj]sx?$'; then
+              FIX_TYPE="Test fix"
+            elif echo "$ERROR_LOGS" | grep -q "lint.*$FILE"; then
+              FIX_TYPE="Lint fix"
+            elif echo "$ERROR_LOGS" | grep -q "type.*$FILE"; then
+              FIX_TYPE="Type fix"
+            fi
+            
+            # Extract just the filename for display
+            FILENAME=$(basename "$FILE")
+            
+            # Calculate line range (1 line before and after)
+            LINE_START=$((LINE_NUM - 1))
+            LINE_END=$((LINE_NUM + 1))
+            if [ "$LINE_START" -lt 1 ]; then LINE_START=1; fi
+            
+            # Build GitHub permalink
+            PERMALINK="https://github.com/${{ github.repository }}/blob/${COMMIT_SHA}/${FILE}#L${LINE_START}-L${LINE_END}"
+            
+            # Add to fixes summary
+            FIXES_SUMMARY="${FIXES_SUMMARY}${SEPARATOR}${FIX_TYPE} in [\`${FILENAME}:${LINE_NUM}\`](${PERMALINK})"
+            SEPARATOR=" • "
+            
+          done <<< "$MODIFIED_FILES"
+          
+          # If no fixes could be determined, use a generic message
+          if [ -z "$FIXES_SUMMARY" ]; then
+            FIXES_SUMMARY="Fixed CI failures in $FILES_COUNT file(s)"
+          fi
+          
+          # Output the fixes summary
+          echo "fixes_summary=$FIXES_SUMMARY" >> $GITHUB_OUTPUT
+          
+          # Extract failed job names for Statsig
+          FAILED_JOBS="${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ',') }}"
+          echo "failed_jobs=$FAILED_JOBS" >> $GITHUB_OUTPUT
+
+
+      - name: Log Statsig Event
+        if: steps.claude.outcome == 'success' && env.STATSIG_API_KEY != ''
+        env:
+          STATSIG_API_KEY: ${{ secrets.STATSIG_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          # Skip if no files were modified
+          if [ "${{ steps.analyze_fixes.outputs.files_count }}" = "0" ]; then
+            echo "No files modified, skipping Statsig logging"
+            exit 0
+          fi
+          
+          # Prepare event data
+          PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+          REPOSITORY="${{ github.repository }}"
+          FIX_BRANCH="${{ steps.branch.outputs.branch_name }}"
+          BASE_BRANCH="${{ github.event.workflow_run.head_branch }}"
+          FAILED_JOBS="${{ steps.analyze_fixes.outputs.failed_jobs }}"
+          FILES_COUNT="${{ steps.analyze_fixes.outputs.files_count }}"
+          CI_RUN_ID="${{ github.event.workflow_run.id }}"
+          TIMESTAMP="$(date +%s)000"
+          
+          # Log the event
+          curl -s -X POST https://events.statsigapi.net/v1/log_event \
+            -H "Content-Type: application/json" \
+            -H "STATSIG-API-KEY: ${STATSIG_API_KEY}" \
+            -d "{
+              \"events\": [{
+                \"eventName\": \"tengu_ci_autofix\",
+                \"metadata\": {
+                  \"stage\": \"generated\",
+                  \"pr_number\": \"${PR_NUMBER}\",
+                  \"repository\": \"${REPOSITORY}\",
+                  \"fix_branch\": \"${FIX_BRANCH}\",
+                  \"base_branch\": \"${BASE_BRANCH}\",
+                  \"failed_jobs\": \"${FAILED_JOBS}\",
+                  \"files_fixed_count\": ${FILES_COUNT},
+                  \"ci_run_id\": \"${CI_RUN_ID}\"
+                },
+                \"time\": \"${TIMESTAMP}\"
+              }]
+            }" || echo "Warning: Failed to log Statsig event, continuing anyway"
+          
+          echo "✅ Logged CI auto-fix generation event to Statsig"

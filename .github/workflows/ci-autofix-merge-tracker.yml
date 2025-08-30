@@ -1,0 +1,149 @@
+name: CI Auto-Fix Feedback Tracker
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  track-autofix-feedback:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch and Log CI Auto-Fix Reactions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATSIG_API_KEY: ${{ secrets.STATSIG_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          PR_MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          PR_MERGED_BY: ${{ github.event.pull_request.merged_by.login }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          echo "Processing PR #${PR_NUMBER} in repository ${REPO}"
+          
+          if [ -z "${STATSIG_API_KEY:-}" ]; then
+            echo "STATSIG_API_KEY not set, skipping event logging"
+            exit 0
+          fi
+          
+          # Fetch all issue comments for the PR looking for CI auto-fix comments
+          echo "Fetching CI auto-fix comments for PR #${PR_NUMBER}..."
+          COMMENTS=$(gh api repos/${REPO}/issues/${PR_NUMBER}/comments --paginate --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("CI Auto-Fix Available"))) | {id: .id, body: .body, reactions: .reactions, created_at: .created_at}' || echo "")
+          
+          if [ -z "$COMMENTS" ]; then
+            echo "No CI auto-fix comments found"
+            exit 0
+          fi
+          
+          echo "Found CI auto-fix comments, processing reactions..."
+          
+          # Track success/failure
+          FAILED_LOGS=0
+          SUCCESSFUL_LOGS=0
+          
+          # Process each comment
+          while IFS= read -r comment; do
+            if [ -z "$comment" ]; then continue; fi
+            
+            COMMENT_ID=$(echo "$comment" | jq -r '.id')
+            THUMBS_UP=$(echo "$comment" | jq -r '.reactions."+1"')
+            THUMBS_DOWN=$(echo "$comment" | jq -r '.reactions."-1"')
+            CREATED_AT=$(echo "$comment" | jq -r '.created_at')
+            COMMENT_BODY=$(echo "$comment" | jq -r '.body')
+            
+            echo "Comment ${COMMENT_ID}: 👍 ${THUMBS_UP}, 👎 ${THUMBS_DOWN}"
+            
+            # Extract fix branch from comment body if present
+            FIX_BRANCH=""
+            if echo "$COMMENT_BODY" | grep -q "compare/.*\.\.\.claude-auto-fix-ci-signed-"; then
+              FIX_BRANCH=$(echo "$COMMENT_BODY" | grep -oE 'claude-auto-fix-ci-signed-[^?]+' | head -1)
+              echo "Detected fix branch: $FIX_BRANCH"
+            fi
+            
+            # Check if the fix was actually applied (by looking at commit messages or branch merges)
+            FIX_APPLIED="unknown"
+            if [ -n "$FIX_BRANCH" ]; then
+              # Check if any commits from the fix branch were merged
+              MERGE_COMMITS=$(gh api repos/${REPO}/pulls/${PR_NUMBER}/commits --paginate --jq '.[] | .commit.message' | grep -c "$FIX_BRANCH" || echo "0")
+              if [ "$MERGE_COMMITS" -gt 0 ]; then
+                FIX_APPLIED="true"
+                echo "Fix was applied (found in commit messages)"
+              else
+                FIX_APPLIED="false"
+                echo "Fix was not applied"
+              fi
+            fi
+            
+            # Log event if there are reactions or if fix was applied
+            if [ "$THUMBS_UP" -gt 0 ] || [ "$THUMBS_DOWN" -gt 0 ] || [ "$FIX_APPLIED" = "true" ]; then
+              # Prepare the event payload
+              EVENT_PAYLOAD=$(jq -n \
+                --arg pr "$PR_NUMBER" \
+                --arg repo "$REPO" \
+                --arg comment_id "$COMMENT_ID" \
+                --arg thumbs_up "$THUMBS_UP" \
+                --arg thumbs_down "$THUMBS_DOWN" \
+                --arg created_at "$CREATED_AT" \
+                --arg merged_at "$PR_MERGED_AT" \
+                --arg merged_by "$PR_MERGED_BY" \
+                --arg fix_branch "$FIX_BRANCH" \
+                --arg fix_applied "$FIX_APPLIED" \
+                '{
+                  events: [{
+                    eventName: "tengu_ci_autofix",
+                    metadata: {
+                      stage: "feedback",
+                      pr_number: $pr,
+                      repository: $repo,
+                      comment_id: $comment_id,
+                      thumbs_up_count: ($thumbs_up | tonumber),
+                      thumbs_down_count: ($thumbs_down | tonumber),
+                      fix_branch: $fix_branch,
+                      fix_applied: $fix_applied,
+                      comment_created_at: $created_at,
+                      pr_merged_at: $merged_at,
+                      pr_merged_by: $merged_by
+                    },
+                    time: (now | floor | tostring + "000")
+                  }]
+                }')
+              
+              echo "Sending feedback event for comment ${COMMENT_ID} with value $((THUMBS_UP - THUMBS_DOWN))"
+              
+              # Send to Statsig API
+              RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://events.statsigapi.net/v1/log_event \
+                -H "Content-Type: application/json" \
+                -H "STATSIG-API-KEY: ${STATSIG_API_KEY}" \
+                -d "$EVENT_PAYLOAD" 2>&1) || {
+                echo "Warning: curl command failed with exit code $?"
+                FAILED_LOGS=$((FAILED_LOGS + 1))
+                continue
+              }
+              
+              HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+              BODY=$(echo "$RESPONSE" | head -n-1)
+              
+              if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 202 ]; then
+                echo "✅ Successfully logged feedback for comment ${COMMENT_ID}"
+                SUCCESSFUL_LOGS=$((SUCCESSFUL_LOGS + 1))
+              else
+                echo "Warning: Failed to log feedback for comment ${COMMENT_ID}. HTTP ${HTTP_CODE}"
+                echo "Response body: ${BODY}"
+                FAILED_LOGS=$((FAILED_LOGS + 1))
+              fi
+            else
+              echo "No reactions on comment ${COMMENT_ID} and fix not applied, skipping"
+            fi
+          done < <(echo "$COMMENTS" | jq -c '.')
+          
+          echo "----------------------------------------"
+          echo "Summary: ${SUCCESSFUL_LOGS} successful, ${FAILED_LOGS} failed"
+          
+          # Don't fail the workflow even if some logs failed
+          echo "Finished processing CI auto-fix feedback"
