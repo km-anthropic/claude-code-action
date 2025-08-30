@@ -134,7 +134,7 @@ Note: The branch will be created from the Base Branch specified in the context.
 
 After successfully pushing the fixes, create an informative comment on the original PR.
 
-### Part A: Prepare Fix Summary with Proper GitHub Links
+### Part A: Prepare Fix Summary (FOLLOW CODE REVIEW FORMAT)
 
 1. **Get the full commit SHA** from your pushed fix branch:
    ```bash
@@ -142,24 +142,30 @@ After successfully pushing the fixes, create an informative comment on the origi
    echo "Commit SHA: $COMMIT_SHA"
    ```
 
-2. **For each file you modified**, create a summary with GitHub permalink:
-   - Identify the fix type: lint error, type error, test failure, etc.
-   - Note the primary line number where the fix was applied
-   - Create a GitHub permalink with 1 line of context (line before and after)
+2. **For each file you modified**, create a numbered list entry:
+   - Brief description of what was fixed (NOT the error itself)
+   - File path relative to repo root
+   - GitHub permalink on the next line
    
-   **FORMAT**: `Fix-type in [\`filename:line\`](permalink)`
+   **FORMAT (MUST MATCH EXACTLY):**
+   ```
+   1. <what was fixed> in <file>
+   https://github.com/OWNER/REPO/blob/FULL_SHA/path/to/file#LSTART-LEND
+   ```
    
-   **CRITICAL LINK FORMAT** (must match exactly):
-   ```
-   https://github.com/OWNER/REPO/blob/FULL_SHA/path/to/file.ext#LSTART-LEND
-   ```
+   **CRITICAL REQUIREMENTS**:
    - Use FULL commit SHA (40 characters), not abbreviated
-   - Line range format: `#L10-L12` (for line 11 with context)
-   - Include 1 line before and after the fix (e.g., fix on line 41 → link to L40-L42)
+   - Line range format: `#L10-L12` (include 1 line before and after)
+   - Put link on its own line (like code review does)
+   - NO inline links, NO markdown link syntax
 
-3. **Combine summaries** with bullet separator:
+3. **Example of CORRECT format**:
    ```
-   SUMMARY1 • SUMMARY2 • SUMMARY3
+   1. Missing semicolon in utils/helper.ts
+   https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/utils/helper.ts#L40-L42
+   
+   2. Type mismatch in api/client.ts
+   https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/api/client.ts#L98-L100
    ```
 
 ### Part B: Check for Duplicate Comments
@@ -172,57 +178,86 @@ gh api repos/REPOSITORY/issues/PR_NUMBER/comments --jq '.[] | select(.user.login
 
 **If the command returns any IDs**: STOP - do not create a new comment.
 
-### Part C: Create the PR Comment
+### Part C: Create the PR Comment (MUST MATCH CODE REVIEW FORMAT)
 
 **Execute this exact command** (replace placeholders with actual values):
 
 ```bash
-gh pr comment PR_NUMBER --body "### 🤖 CI Auto-Fix Available
+gh pr comment PR_NUMBER --body "### CI fixes
 
-Fixed: FIX_SUMMARIES
+Fixed N issues:
+
+FIX_SUMMARIES
 
 **[→ Create PR with fixes](https://github.com/OWNER/REPO/compare/BASE_BRANCH...FIX_BRANCH?quick_pull=1)**
 
-🤖 Generated with [Claude Code](https://claude.ai/code) • [Failed CI run](CI_RUN_URL)"
+🤖 Generated with [Claude Code](https://claude.ai/code)"
 ```
 
-### COMPLETE EXAMPLES
+**WHERE FIX_SUMMARIES FORMAT IS:**
+```
+1. <brief description of what was fixed> in <file>
+https://github.com/OWNER/REPO/blob/FULL_SHA/path/to/file#LSTART-LEND
 
-**Example 1** - Multiple fixes (assuming PR #123, commit sha abc123...):
+2. <brief description of what was fixed> in <file>  
+https://github.com/OWNER/REPO/blob/FULL_SHA/path/to/file#LSTART-LEND
+```
+
+### COMPLETE EXAMPLES (FOLLOW THESE EXACTLY)
+
+**Example 1** - Multiple fixes:
 ```bash
-gh pr comment 123 --body "### 🤖 CI Auto-Fix Available
+gh pr comment 123 --body "### CI fixes
 
-Fixed: Missing semicolon in [\`utils/helper.ts:41\`](https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/utils/helper.ts#L40-L42) • Type mismatch in [\`api/client.ts:99\`](https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/api/client.ts#L98-L100) • Undefined variable in [\`tests/auth.test.ts:55\`](https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/tests/auth.test.ts#L54-L56)
+Fixed 3 issues:
+
+1. Missing semicolon in utils/helper.ts
+https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/utils/helper.ts#L40-L42
+
+2. Type mismatch in api/client.ts
+https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/api/client.ts#L98-L100
+
+3. Undefined variable in tests/auth.test.ts
+https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/tests/auth.test.ts#L54-L56
 
 **[→ Create PR with fixes](https://github.com/anthropics/claude-cli-internal/compare/main...claude-auto-fix-ci-signed-feature-xyz-28476234)**
 
-🤖 Generated with [Claude Code](https://claude.ai/code) • [Failed CI run](https://github.com/anthropics/claude-cli-internal/actions/runs/17282789906)"
+🤖 Generated with [Claude Code](https://claude.ai/code)"
 ```
 
 **Example 2** - Single fix:
 ```bash
-gh pr comment 456 --body "### 🤖 CI Auto-Fix Available
+gh pr comment 456 --body "### CI fixes
 
-Fixed: Import statement error in [\`index.ts:5\`](https://github.com/anthropics/claude-cli-internal/blob/def4567890abcdef1234567890abcdef123456789/src/index.ts#L4-L6)
+Fixed 1 issue:
+
+1. Import statement error in index.ts
+https://github.com/anthropics/claude-cli-internal/blob/def4567890abcdef1234567890abcdef123456789/src/index.ts#L4-L6
 
 **[→ Create PR with fixes](https://github.com/anthropics/claude-cli-internal/compare/develop...claude-auto-fix-ci-signed-bugfix-28476235)**
 
-🤖 Generated with [Claude Code](https://claude.ai/code) • [Failed CI run](https://github.com/anthropics/claude-cli-internal/actions/runs/17282789907)"
+🤖 Generated with [Claude Code](https://claude.ai/code)"
 ```
 
-### CRITICAL REQUIREMENTS
+### CRITICAL FORMAT REQUIREMENTS
 
-1. **Link format MUST be exact**:
+1. **MUST use numbered list format**:
+   - ✅ CORRECT: `1. Missing semicolon in utils/helper.ts`
+   - ❌ WRONG: `Fixed: Missing semicolon in utils/helper.ts`
+   - ❌ WRONG: `- Missing semicolon in utils/helper.ts`
+
+2. **GitHub link MUST be on its own line**:
+   - ✅ CORRECT: Description on line 1, link on line 2
+   - ❌ WRONG: `Missing semicolon in [\`file.ts:41\`](link)` 
+   - ❌ WRONG: Inline links with description
+
+3. **Link format MUST be exact**:
    - ✅ CORRECT: `https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/file.ts#L10-L12`
-   - ❌ WRONG: `https://github.com/anthropics/claude-cli-internal/blob/abc123/src/file.ts#L11`
-   - ❌ WRONG: Missing `#L` prefix or `-L` in range
    - ❌ WRONG: Abbreviated SHA
+   - ❌ WRONG: Missing `#L` prefix or `-L` in range
+   - ❌ WRONG: Wrong line range format
 
-2. **Fix summaries MUST be concise**:
-   - ✅ GOOD: "Missing semicolon in [`file.ts:41`](link)"
-   - ❌ BAD: "Fixed missing semicolon issue in TypeScript file [`file.ts:41`](link) that was causing build to fail"
-
-3. **MUST use bullet separator** (` • `) between multiple fixes, not commas or newlines
+4. **Follow code review workflow pattern exactly** - see /code-review command for reference
 
 ## Step 7: Final Verification
 
@@ -239,35 +274,36 @@ Fixed: Import statement error in [\`index.ts:5\`](https://github.com/anthropics/
    - Failed CI run reference
 4. ✅ Verified no duplicate comments were created
 
-### FINAL OUTPUT FORMAT
+### FINAL OUTPUT FORMAT (MUST MATCH CODE REVIEW STYLE)
 
-Your PR comment MUST follow this exact format (example with 3 fixes):
+Your PR comment MUST follow this exact format:
 
 ---
 
-### 🤖 CI Auto-Fix Available
+### CI fixes
 
-Fixed: Missing semicolon in [`utils/helper.ts:41`](https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/utils/helper.ts#L40-L42) • Type mismatch in [`api/client.ts:99`](https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/api/client.ts#L98-L100) • Undefined variable in [`tests/auth.test.ts:55`](https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/tests/auth.test.ts#L54-L56)
+Fixed 3 issues:
+
+1. Missing semicolon in utils/helper.ts
+https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/utils/helper.ts#L40-L42
+
+2. Type mismatch in api/client.ts  
+https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/src/api/client.ts#L98-L100
+
+3. Undefined variable in tests/auth.test.ts
+https://github.com/anthropics/claude-cli-internal/blob/abc1234567890abcdef1234567890abcdef123456/tests/auth.test.ts#L54-L56
 
 **[→ Create PR with fixes](https://github.com/anthropics/claude-cli-internal/compare/main...claude-auto-fix-ci-signed-feature-xyz-28476234)**
 
-🤖 Generated with [Claude Code](https://claude.ai/code) • [Failed CI run](https://github.com/anthropics/claude-cli-internal/actions/runs/17282789906)
+🤖 Generated with [Claude Code](https://claude.ai/code)
 
 ---
 
-Or for a single fix:
-
----
-
-### 🤖 CI Auto-Fix Available
-
-Fixed: Import statement error in [`index.ts:5`](https://github.com/anthropics/claude-cli-internal/blob/def4567890abcdef1234567890abcdef123456789/src/index.ts#L4-L6)
-
-**[→ Create PR with fixes](https://github.com/anthropics/claude-cli-internal/compare/develop...claude-auto-fix-ci-signed-bugfix-28476235)**
-
-🤖 Generated with [Claude Code](https://claude.ai/code) • [Failed CI run](https://github.com/anthropics/claude-cli-internal/actions/runs/17282789907)
-
----
+This format:
+- Uses numbered lists (1., 2., 3.) not bullet points
+- Puts GitHub links on their own line below each description
+- Matches the code review workflow format exactly
+- Does NOT use inline links like [`file.ts:41`](link)
 
 **THE TASK IS NOT COMPLETE** until the PR comment is created with this exact format.
 
