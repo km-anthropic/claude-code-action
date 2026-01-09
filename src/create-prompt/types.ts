@@ -1,3 +1,5 @@
+import type { GitHubContext } from "../github/context";
+
 export type CommonFields = {
   repository: string;
   claudeCommentId: string;
@@ -99,4 +101,5 @@ export type EventData =
 // Combined type with separate eventData field
 export type PreparedContext = CommonFields & {
   eventData: EventData;
+  githubContext?: GitHubContext;
 };

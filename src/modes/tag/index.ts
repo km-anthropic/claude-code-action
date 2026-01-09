@@ -125,6 +125,9 @@ export const tagMode: Mode = {
       "Read",
       "Write",
       "mcp__github_comment__update_claude_comment",
+      "mcp__github_ci__get_ci_status",
+      "mcp__github_ci__get_workflow_run_details",
+      "mcp__github_ci__download_job_log",
     ];
 
     // Add git commands when not using commit signing
@@ -177,7 +180,25 @@ export const tagMode: Mode = {
     githubData: FetchDataResult,
     useCommitSigning: boolean,
   ): string {
-    return generateDefaultPrompt(context, githubData, useCommitSigning);
+    const defaultPrompt = generateDefaultPrompt(
+      context,
+      githubData,
+      useCommitSigning,
+    );
+
+    // If a custom prompt is provided, inject it into the tag mode prompt
+    if (context.githubContext?.inputs?.prompt) {
+      return (
+        defaultPrompt +
+        `
+
+<custom_instructions>
+${context.githubContext.inputs.prompt}
+</custom_instructions>`
+      );
+    }
+
+    return defaultPrompt;
   },
 
   getSystemPrompt() {

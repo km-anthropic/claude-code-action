@@ -75,6 +75,7 @@ type BaseContext = {
     useStickyComment: boolean;
     useCommitSigning: boolean;
     allowedBots: string;
+    trackProgress: boolean;
   };
 };
 
@@ -122,6 +123,7 @@ export function parseGitHubContext(): GitHubContext {
       useStickyComment: process.env.USE_STICKY_COMMENT === "true",
       useCommitSigning: process.env.USE_COMMIT_SIGNING === "true",
       allowedBots: process.env.ALLOWED_BOTS ?? "",
+      trackProgress: process.env.TRACK_PROGRESS === "true",
     },
   };
 

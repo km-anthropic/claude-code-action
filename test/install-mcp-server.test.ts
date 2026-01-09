@@ -32,6 +32,7 @@ describe("prepareMcpConfig", () => {
       useStickyComment: false,
       useCommitSigning: false,
       allowedBots: "",
+      trackProgress: false,
     },
   };
 
